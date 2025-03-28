@@ -13,10 +13,9 @@ from services.inspection_service import (
 from services.equipment_service import (
     create_equipment,
 )  # Needed to create test equipment
-from db import db_connection
 
 
-def test_create_parameter():
+def test_create_parameter(fresh_db):
     """
     Test creating a new parameter and verify that it exists in the database.
     """
@@ -51,12 +50,11 @@ def test_create_parameter():
     assert parameter_id is not None
 
     # Verify directly from the database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM PARAMETRO_ANALISIS WHERE id_parametro = ?", (parameter_id,)
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute(
+        "SELECT * FROM PARAMETRO_ANALISIS WHERE id_parametro = ?", (parameter_id,)
+    )
+    row = cursor.fetchone()
 
     assert row is not None
     assert row["id_inspeccion"] == inspection_id
@@ -73,7 +71,7 @@ def test_get_parameter_not_found():
     assert parameter is None
 
 
-def test_update_parameter():
+def test_update_parameter(fresh_db):
     """
     Test updating a parameter and verifying the change in the database.
     """
@@ -106,19 +104,18 @@ def test_update_parameter():
     assert affected_rows == 1
 
     # Verify update in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM PARAMETRO_ANALISIS WHERE id_parametro = ?", (parameter_id,)
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute(
+        "SELECT * FROM PARAMETRO_ANALISIS WHERE id_parametro = ?", (parameter_id,)
+    )
+    row = cursor.fetchone()
 
     assert row is not None
     assert row["parametro_analizado"] == "Salinity"
     assert row["valor"] == 8.90
 
 
-def test_delete_parameter():
+def test_delete_parameter(fresh_db):
     """
     Test deleting a parameter and confirming that it no longer exists in the database.
     """
@@ -149,17 +146,16 @@ def test_delete_parameter():
     assert affected_rows == 1
 
     # Verify deletion in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM PARAMETRO_ANALISIS WHERE id_parametro = ?", (parameter_id,)
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute(
+        "SELECT * FROM PARAMETRO_ANALISIS WHERE id_parametro = ?", (parameter_id,)
+    )
+    row = cursor.fetchone()
 
     assert row is None  # Parameter should no longer exist
 
 
-def test_list_parameters():
+def test_list_parameters(fresh_db):
     """
     Test listing all parameters and confirm that the count matches the database.
     """
@@ -191,9 +187,8 @@ def test_list_parameters():
     assert len(parameters) >= 2  # Ensuring at least two parameter records exist
 
     # Verify directly from the database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM PARAMETRO_ANALISIS")
-        parameter_count = cursor.fetchone()[0]
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM PARAMETRO_ANALISIS")
+    parameter_count = cursor.fetchone()[0]
 
     assert parameter_count >= 2  # Ensure at least two parameters exist in the table

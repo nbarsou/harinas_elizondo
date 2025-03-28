@@ -8,10 +8,9 @@ from services.address_service import (
     list_addresses,
 )
 from services.client_service import create_client  # Needed to create test clients
-from db import db_connection
 
 
-def test_create_address():
+def test_create_address(fresh_db):
     """
     Test creating a new address and verify that it exists in the database.
     """
@@ -36,12 +35,11 @@ def test_create_address():
     assert address_id is not None
 
     # Verify directly from the database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM DIRECCION_CLIENTE WHERE id_direccion = ?", (address_id,)
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute(
+        "SELECT * FROM DIRECCION_CLIENTE WHERE id_direccion = ?", (address_id,)
+    )
+    row = cursor.fetchone()
 
     assert row is not None
     assert row["id_cliente"] == client_id
@@ -61,7 +59,7 @@ def test_get_address_not_found():
     assert address is None
 
 
-def test_update_address():
+def test_update_address(fresh_db):
     """
     Test updating an address and verifying the change in the database.
     """
@@ -94,12 +92,11 @@ def test_update_address():
     assert affected_rows == 1
 
     # Verify update in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM DIRECCION_CLIENTE WHERE id_direccion = ?", (address_id,)
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute(
+        "SELECT * FROM DIRECCION_CLIENTE WHERE id_direccion = ?", (address_id,)
+    )
+    row = cursor.fetchone()
 
     assert row is not None
     assert row["calle"] == "New Street"
@@ -110,7 +107,7 @@ def test_update_address():
     assert row["estado"] == "Monterrey"
 
 
-def test_delete_address():
+def test_delete_address(fresh_db):
     """
     Test deleting an address and confirm that it no longer exists in the database.
     """
@@ -134,17 +131,16 @@ def test_delete_address():
     assert affected_rows == 1
 
     # Verify deletion in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM DIRECCION_CLIENTE WHERE id_direccion = ?", (address_id,)
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute(
+        "SELECT * FROM DIRECCION_CLIENTE WHERE id_direccion = ?", (address_id,)
+    )
+    row = cursor.fetchone()
 
     assert row is None  # Address should no longer exist
 
 
-def test_list_addresses():
+def test_list_addresses(fresh_db):
     """
     Test listing all addresses and confirm that database reflects the correct number of addresses.
     """
@@ -167,9 +163,8 @@ def test_list_addresses():
     assert len(addresses) >= 2  # Check that at least 2 addresses exist
 
     # Verify directly from the database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM DIRECCION_CLIENTE")
-        address_count = cursor.fetchone()[0]
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM DIRECCION_CLIENTE")
+    address_count = cursor.fetchone()[0]
 
     assert address_count >= 2  # Ensure at least two addresses exist in the table

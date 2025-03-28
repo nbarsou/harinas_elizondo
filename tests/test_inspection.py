@@ -11,10 +11,9 @@ from services.equipment_service import (
     create_equipment,
 )  # Needed to create test equipment
 from services.user_service import create_user  # Needed to create an inspector
-from db import db_connection
 
 
-def test_create_inspection():
+def test_create_inspection(fresh_db):
     """
     Test creating a new inspection and verify that it exists in the database.
     """
@@ -57,12 +56,9 @@ def test_create_inspection():
     assert inspection_id is not None
 
     # Verify directly from the database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM INSPECCION WHERE id_inspeccion = ?", (inspection_id,)
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT * FROM INSPECCION WHERE id_inspeccion = ?", (inspection_id,))
+    row = cursor.fetchone()
 
     assert row is not None
     assert row["numero_lote"] == "LOT-001"
@@ -79,7 +75,7 @@ def test_get_inspection_not_found():
     assert inspection is None
 
 
-def test_update_inspection():
+def test_update_inspection(fresh_db):
     """
     Test updating an inspection record and verifying the change in the database.
     """
@@ -128,12 +124,9 @@ def test_update_inspection():
     assert affected_rows == 1
 
     # Verify update in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM INSPECCION WHERE id_inspeccion = ?", (inspection_id,)
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT * FROM INSPECCION WHERE id_inspeccion = ?", (inspection_id,))
+    row = cursor.fetchone()
 
     assert row is not None
     assert row["numero_lote"] == "LOT-003"
@@ -143,7 +136,7 @@ def test_update_inspection():
     assert row["tipo_inspeccion"] == "Final"
 
 
-def test_delete_inspection():
+def test_delete_inspection(fresh_db):
     """
     Test deleting an inspection and confirm that it no longer exists in the database.
     """
@@ -183,17 +176,14 @@ def test_delete_inspection():
     assert affected_rows == 1
 
     # Verify deletion in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM INSPECCION WHERE id_inspeccion = ?", (inspection_id,)
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT * FROM INSPECCION WHERE id_inspeccion = ?", (inspection_id,))
+    row = cursor.fetchone()
 
     assert row is None  # Inspection should no longer exist
 
 
-def test_list_inspections():
+def test_list_inspections(fresh_db):
     """
     Test listing all inspections and confirm that the count matches the database.
     """
@@ -242,9 +232,8 @@ def test_list_inspections():
     assert len(inspections) >= 2  # Ensuring at least two inspection records exist
 
     # Verify directly from the database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM INSPECCION")
-        inspection_count = cursor.fetchone()[0]
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM INSPECCION")
+    inspection_count = cursor.fetchone()[0]
 
     assert inspection_count >= 2  # Ensure at least two inspections exist in the table

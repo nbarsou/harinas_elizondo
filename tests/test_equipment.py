@@ -9,10 +9,9 @@ from services.equipment_service import (
     deactivate_equipment,
 )
 from services.user_service import create_user  # Needed to create an equipment manager
-from db import db_connection
 
 
-def test_create_equipment():
+def test_create_equipment(fresh_db):
     """
     Test creating a new equipment record and verify that it exists in the database.
     """
@@ -43,12 +42,11 @@ def test_create_equipment():
     assert equipment_id is not None
 
     # Verify directly from the database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM EQUIPO_LABORATORIO WHERE id_equipo = ?", (equipment_id,)
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute(
+        "SELECT * FROM EQUIPO_LABORATORIO WHERE id_equipo = ?", (equipment_id,)
+    )
+    row = cursor.fetchone()
 
     assert row is not None
     assert row["tipo"] == "Microscope"
@@ -66,7 +64,7 @@ def test_get_equipment_not_found():
     assert equipment is None
 
 
-def test_update_equipment():
+def test_update_equipment(fresh_db):
     """
     Test updating an equipment record and verifying the change in the database.
     """
@@ -111,12 +109,11 @@ def test_update_equipment():
     assert affected_rows == 1
 
     # Verify update in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM EQUIPO_LABORATORIO WHERE id_equipo = ?", (equipment_id,)
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute(
+        "SELECT * FROM EQUIPO_LABORATORIO WHERE id_equipo = ?", (equipment_id,)
+    )
+    row = cursor.fetchone()
 
     assert row is not None
     assert row["tipo"] == "Advanced Microscope"
@@ -125,7 +122,7 @@ def test_update_equipment():
     assert row["estado"] == "Under Maintenance"
 
 
-def test_deactivate_equipment():
+def test_deactivate_equipment(fresh_db):
     """
     Test marking an equipment as inactive and storing a reason for deactivation.
     """
@@ -157,20 +154,19 @@ def test_deactivate_equipment():
     assert affected_rows == 1
 
     # Verify deactivation in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT estado, causa_baja FROM EQUIPO_LABORATORIO WHERE id_equipo = ?",
-            (equipment_id,),
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute(
+        "SELECT estado, causa_baja FROM EQUIPO_LABORATORIO WHERE id_equipo = ?",
+        (equipment_id,),
+    )
+    row = cursor.fetchone()
 
     assert row is not None
     assert row["estado"] == "Inactive"
     assert row["causa_baja"] == "Outdated and replaced with a newer model"
 
 
-def test_delete_equipment():
+def test_delete_equipment(fresh_db):
     """
     Test deleting an equipment record and confirming that it no longer exists in the database.
     """
@@ -198,17 +194,16 @@ def test_delete_equipment():
     assert affected_rows == 1
 
     # Verify deletion in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM EQUIPO_LABORATORIO WHERE id_equipo = ?", (equipment_id,)
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute(
+        "SELECT * FROM EQUIPO_LABORATORIO WHERE id_equipo = ?", (equipment_id,)
+    )
+    row = cursor.fetchone()
 
     assert row is None  # Equipment should no longer exist
 
 
-def test_list_equipment():
+def test_list_equipment(fresh_db):
     """
     Test listing all equipment and confirm that the count matches the database.
     """
@@ -253,9 +248,8 @@ def test_list_equipment():
     assert len(equipment) >= 2  # Ensuring at least two equipment records exist
 
     # Verify directly from the database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM EQUIPO_LABORATORIO")
-        equipment_count = cursor.fetchone()[0]
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM EQUIPO_LABORATORIO")
+    equipment_count = cursor.fetchone()[0]
 
     assert equipment_count >= 2  # Ensure at least two equipment exist in the table

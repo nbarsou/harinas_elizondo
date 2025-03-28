@@ -7,10 +7,9 @@ from services.user_service import (
     delete_user,
     list_users,
 )
-from db import db_connection
 
 
-def test_create_user():
+def test_create_user(fresh_db):
     """
     Test creating a new user and verify that it exists in the database.
     """
@@ -18,10 +17,9 @@ def test_create_user():
     assert user_id is not None
 
     # Query database directly
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM USUARIO WHERE id_usuario = ?", (user_id,))
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT * FROM USUARIO WHERE id_usuario = ?", (user_id,))
+    row = cursor.fetchone()
 
     assert row is not None
     assert row["mail"] == "test@example.com"
@@ -37,7 +35,7 @@ def test_get_user_not_found():
     assert user is None
 
 
-def test_update_user():
+def test_update_user(fresh_db):
     """
     Test updating a user's information and verifying the change in the database.
     """
@@ -49,16 +47,15 @@ def test_update_user():
     assert affected_rows == 1
 
     # Verify update in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM USUARIO WHERE id_usuario = ?", (user_id,))
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT * FROM USUARIO WHERE id_usuario = ?", (user_id,))
+    row = cursor.fetchone()
 
     assert row["nombre"] == "New Name"
     assert row["rol"] == "admin"
 
 
-def test_delete_user():
+def test_delete_user(fresh_db):
     """
     Test deleting a user and confirm that it no longer exists in the database.
     """
@@ -68,15 +65,14 @@ def test_delete_user():
     assert affected_rows == 1
 
     # Verify deletion in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM USUARIO WHERE id_usuario = ?", (user_id,))
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT * FROM USUARIO WHERE id_usuario = ?", (user_id,))
+    row = cursor.fetchone()
 
     assert row is None  # User should no longer exist
 
 
-def test_list_users():
+def test_list_users(fresh_db):
     """
     Test listing all users and confirm that database reflects the correct number of users.
     """
@@ -87,9 +83,8 @@ def test_list_users():
     assert len(users) >= 2  # Check that at least 2 users exist
 
     # Verify directly from the database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM USUARIO")
-        user_count = cursor.fetchone()[0]  # Fetch count
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM USUARIO")
+    user_count = cursor.fetchone()[0]  # Fetch count
 
     assert user_count >= 2  # Ensure at least two users exist in the table

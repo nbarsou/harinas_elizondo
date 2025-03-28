@@ -11,10 +11,9 @@ from services.client_service import create_client  # Needed to create test clien
 from services.inspection_service import (
     create_inspection,
 )  # Needed to create test inspections
-from db import db_connection
 
 
-def test_create_certificate():
+def test_create_certificate(fresh_db):
     """
     Test creating a new certification record and verify that it exists in the database.
     """
@@ -57,13 +56,12 @@ def test_create_certificate():
     assert certificate_id is not None
 
     # Verify directly from the database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM CERTIFICADO_CALIDAD WHERE id_certificado = ?",
-            (certificate_id,),
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute(
+        "SELECT * FROM CERTIFICADO_CALIDAD WHERE id_certificado = ?",
+        (certificate_id,),
+    )
+    row = cursor.fetchone()
 
     assert row is not None
     assert row["id_cliente"] == client_id
@@ -81,7 +79,7 @@ def test_get_certificate_not_found():
     assert certificate is None
 
 
-def test_update_certificate():
+def test_update_certificate(fresh_db):
     """
     Test updating a certification record and verifying the change in the database.
     """
@@ -135,13 +133,12 @@ def test_update_certificate():
     assert affected_rows == 1
 
     # Verify update in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM CERTIFICADO_CALIDAD WHERE id_certificado = ?",
-            (certificate_id,),
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute(
+        "SELECT * FROM CERTIFICADO_CALIDAD WHERE id_certificado = ?",
+        (certificate_id,),
+    )
+    row = cursor.fetchone()
 
     assert row is not None
     assert row["orden_compra"] == "PO-3003"
@@ -150,7 +147,7 @@ def test_update_certificate():
     assert row["destinatario_correo"] == "quality@example.com"
 
 
-def test_delete_certificate():
+def test_delete_certificate(fresh_db):
     """
     Test deleting a certification record and confirm that it no longer exists in the database.
     """
@@ -189,18 +186,17 @@ def test_delete_certificate():
     assert affected_rows == 1
 
     # Verify deletion in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM CERTIFICADO_CALIDAD WHERE id_certificado = ?",
-            (certificate_id,),
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute(
+        "SELECT * FROM CERTIFICADO_CALIDAD WHERE id_certificado = ?",
+        (certificate_id,),
+    )
+    row = cursor.fetchone()
 
     assert row is None  # Certificate should no longer exist
 
 
-def test_list_certificates():
+def test_list_certificates(fresh_db):
     """
     Test listing all certificates and confirm that the count matches the database.
     """
@@ -254,9 +250,8 @@ def test_list_certificates():
     assert len(certificates) >= 2  # Ensuring at least two certification records exist
 
     # Verify directly from the database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM CERTIFICADO_CALIDAD")
-        certificate_count = cursor.fetchone()[0]
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM CERTIFICADO_CALIDAD")
+    certificate_count = cursor.fetchone()[0]
 
     assert certificate_count >= 2  # Ensure at least two certificates exist in the table

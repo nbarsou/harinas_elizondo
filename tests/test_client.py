@@ -8,10 +8,9 @@ from services.client_service import (
     delete_client,
     list_clients,
 )
-from db import db_connection
 
 
-def test_create_client():
+def test_create_client(fresh_db):
     """
     Test creating a new client and verify that it exists in the database.
     """
@@ -29,10 +28,9 @@ def test_create_client():
     assert client_id is not None
 
     # Query database directly
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM CLIENTE WHERE id_cliente = ?", (client_id,))
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT * FROM CLIENTE WHERE id_cliente = ?", (client_id,))
+    row = cursor.fetchone()
 
     assert row is not None
     assert row["nombre"] == "Empresa S.A."
@@ -51,7 +49,7 @@ def test_get_client_not_found():
     assert client is None
 
 
-def test_update_client():
+def test_update_client(fresh_db):
     """
     Test updating a client's information and verifying the change in the database.
     """
@@ -81,10 +79,9 @@ def test_update_client():
     assert affected_rows == 1
 
     # Verify update in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM CLIENTE WHERE id_cliente = ?", (client_id,))
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT * FROM CLIENTE WHERE id_cliente = ?", (client_id,))
+    row = cursor.fetchone()
 
     assert row["nombre"] == "Cliente Nuevo"
     assert row["rfc"] == "RFC111111"
@@ -94,7 +91,7 @@ def test_update_client():
     assert row["activo"] == 0  # Confirm deactivation
 
 
-def test_delete_client():
+def test_delete_client(fresh_db):
     """
     Test deleting a client and confirm that it no longer exists in the database.
     """
@@ -114,15 +111,14 @@ def test_delete_client():
     assert affected_rows == 1
 
     # Verify deletion in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM CLIENTE WHERE id_cliente = ?", (client_id,))
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT * FROM CLIENTE WHERE id_cliente = ?", (client_id,))
+    row = cursor.fetchone()
 
     assert row is None  # Client should no longer exist
 
 
-def test_list_clients():
+def test_list_clients(fresh_db):
     """
     Test listing all clients and confirm that database reflects the correct number of clients.
     """
@@ -153,15 +149,14 @@ def test_list_clients():
     assert len(clients) >= 2  # Check that at least 2 clients exist
 
     # Verify directly from the database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM CLIENTE")
-        client_count = cursor.fetchone()[0]  # Fetch count
+    cursor = fresh_db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM CLIENTE")
+    client_count = cursor.fetchone()[0]  # Fetch count
 
     assert client_count >= 2  # Ensure at least two clients exist in the table
 
 
-def test_deactivate_client():
+def test_deactivate_client(fresh_db):
     """
     Test deactivating a client and verifying that 'activo' is set to 0 and 'motivo_baja' is stored.
     """
@@ -181,12 +176,11 @@ def test_deactivate_client():
     assert affected_rows == 1
 
     # Verify in database
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT activo, motivo_baja FROM CLIENTE WHERE id_cliente = ?", (client_id,)
-        )
-        row = cursor.fetchone()
+    cursor = fresh_db.cursor()
+    cursor.execute(
+        "SELECT activo, motivo_baja FROM CLIENTE WHERE id_cliente = ?", (client_id,)
+    )
+    row = cursor.fetchone()
 
     assert row is not None
     assert row["activo"] == 0
