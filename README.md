@@ -113,7 +113,7 @@ Este proyecto usa `pytest` para ejecutar pruebas. Todas las pruebas están en la
 ### **Ejecutar Todas las Pruebas**
 
 ```bash
-pytest
+python - pytest
 ```
 
 ### **Ejecutar una Prueba Individual**
@@ -121,13 +121,13 @@ pytest
 Si solo deseas ejecutar un archivo específico de pruebas:
 
 ```bash
-pytest tests/test_nombre_archivo.py
+python -m pytest tests/test_nombre_archivo.py
 ```
 
 Ejemplo:
 
 ```bash
-pytest tests/test_client.py
+python -m pytest tests/test_client.py
 ```
 
 ---

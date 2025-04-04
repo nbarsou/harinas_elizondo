@@ -5,10 +5,10 @@ Maneja las operaciones de base de datos relacionadas con los usuarios, incluyend
 lectura, actualización y eliminación de registros.
 Este servicio también permite recuperar todos los IDs de usuarios o buscar usuarios con parámetros específicos.
 """
-from db import get_connection
+from db import db_connection
 
 
-def create_user(mail: str, contrasena: str, rol: str, nombre: str) -> int:
+def create_user(mail: str, contrasena: str, rol: str, nombre: str) -> int | None:
     """
     Crea un nuevo usuario en la base de datos.
 
@@ -24,7 +24,17 @@ def create_user(mail: str, contrasena: str, rol: str, nombre: str) -> int:
     Excepciones:
     - Puede generar una excepción si el correo electrónico ya existe en la base de datos.
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = """
+            INSERT INTO USUARIO (mail, contrasena, rol, nombre)
+            VALUES (?, ?, ?, ?)
+        """
+        cursor.execute(query, (mail, contrasena, rol, nombre))
+        user_id = cursor.lastrowid
+        if user_id:
+            return user_id
+        return None
 
 
 def get_user(user_id: int) -> dict | None:
@@ -38,9 +48,28 @@ def get_user(user_id: int) -> dict | None:
     - dict: Información del usuario si existe.
     - None: Si el usuario no se encuentra en la base de datos.
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = """
+            SELECT id_usuario, mail, contrasena, rol, nombre
+            FROM USUARIO
+            WHERE id_usuario = ?
+        """
+        cursor.execute(query, (user_id,))
+        row = cursor.fetchone()
+
+    if row:
+        return {
+            "id_usuario": row["id_usuario"],
+            "mail": row["mail"],
+            "contrasena": row["contrasena"],
+            "rol": row["rol"],
+            "nombre": row["nombre"],
+        }
+    return None
 
 
+# TODO: Si no se actualizan filas, regresa MySQL 0?
 def update_user(user_id: int, mail: str, contrasena: str, rol: str, nombre: str) -> int:
     """
     Actualiza la información de un usuario en la base de datos.
@@ -58,7 +87,16 @@ def update_user(user_id: int, mail: str, contrasena: str, rol: str, nombre: str)
     Excepciones:
     - Puede generar una excepción si el correo electrónico ya existe en otro usuario.
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = """
+            UPDATE USUARIO
+            SET mail = ?, contrasena = ?, rol = ?, nombre = ?
+            WHERE id_usuario = ?
+        """
+        cursor.execute(query, (mail, contrasena, rol, nombre, user_id))
+        affected_rows = cursor.rowcount
+    return affected_rows
 
 
 def delete_user(user_id: int) -> int:
@@ -71,7 +109,15 @@ def delete_user(user_id: int) -> int:
     Retorna:
     - int: Número de filas afectadas (1 si el usuario fue eliminado, 0 si el usuario no existía).
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = """
+            DELETE FROM USUARIO
+            WHERE id_usuario = ?
+        """
+        cursor.execute(query, (user_id,))
+        affected_rows = cursor.rowcount
+    return affected_rows
 
 
 def list_users() -> list:
@@ -82,4 +128,22 @@ def list_users() -> list:
     - list: Lista de diccionarios, donde cada diccionario representa un usuario.
     - Lista vacía si no hay usuarios en la base de datos.
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = """
+            SELECT id_usuario, mail, contrasena, rol, nombre
+            FROM USUARIO
+        """
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+    return [
+        {
+            "id_usuario": row["id_usuario"],
+            "mail": row["mail"],
+            "contrasena": row["contrasena"],
+            "rol": row["rol"],
+            "nombre": row["nombre"],
+        }
+        for row in rows
+    ]
