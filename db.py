@@ -3,8 +3,9 @@ import sqlite3
 import os
 from contextlib import contextmanager
 
-# Default database path (in-memory unless overridden)
-DB_PATH = os.getenv("DB_PATH", ":memory:")
+# Default to a persistent file-based database.
+# When testing/developing, you can override this via an environment variable.
+DB_PATH = os.environ.get("DB_PATH", "data.db")
 
 # Path to the SQL schema file
 SQL_FILE_PATH = "./harina.sql"
@@ -20,7 +21,7 @@ def db_connection():
             cursor.execute("SQL_QUERY")
             result = cursor.fetchall()
     """
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, uri=DB_PATH.startswith("file:"))
     conn.row_factory = sqlite3.Row  # Allows accessing columns by name
     try:
         yield conn  # Return the connection for use
