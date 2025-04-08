@@ -16,7 +16,7 @@ def create_address(
     codigo_postal: str,
     delegacion: str,
     estado: str,
-) -> int:
+) -> int | None:
     """
     Crea una nueva dirección asociada a un cliente en la base de datos.
 
@@ -30,9 +30,31 @@ def create_address(
     - estado (str): Estado en el que se encuentra la dirección.
 
     Retorna:
-    - int: ID de la dirección creada.
+    - int: ID de la dirección creada, o None si no se pudo crear.
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = """
+            INSERT INTO addresses (
+                id_cliente, calle, num_exterior, num_interior, 
+                codigo_postal, delegacion, estado
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """
+        cursor.execute(query, (
+            id_cliente,
+            calle,
+            num_exterior,
+            num_interior,
+            codigo_postal,
+            delegacion,
+            estado
+        ))
+        address_id = cursor.lastrowid
+
+    if address_id:
+        return address_id
+    return None
 
 
 def get_address(id_direccion: int) -> dict | None:
@@ -46,7 +68,15 @@ def get_address(id_direccion: int) -> dict | None:
     - dict: Información de la dirección si existe.
     - None: Si la dirección no se encuentra en la base de datos.
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = "SELECT * FROM addresses WHERE id = ?"
+        cursor.execute(query, (id_direccion,))
+        row = cursor.fetchone()
+
+    if row:
+        return dict(row)
+    return None
 
 
 def update_address(
@@ -75,7 +105,32 @@ def update_address(
     Retorna:
     - int: Número de filas afectadas (1 si se actualizó, 0 si no se encontró la dirección).
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = """
+            UPDATE addresses 
+            SET id_cliente = ?, 
+                calle = ?, 
+                num_exterior = ?, 
+                num_interior = ?, 
+                codigo_postal = ?, 
+                delegacion = ?, 
+                estado = ?
+            WHERE id = ?
+        """
+        cursor.execute(query, (
+            id_cliente,
+            calle,
+            num_exterior,
+            num_interior,
+            codigo_postal,
+            delegacion,
+            estado,
+            id_direccion
+        ))
+        affected_rows = cursor.rowcount
+
+    return affected_rows
 
 
 def delete_address(id_direccion: int) -> int:
@@ -88,7 +143,13 @@ def delete_address(id_direccion: int) -> int:
     Retorna:
     - int: Número de filas afectadas (1 si la dirección fue eliminada, 0 si no existía).
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = "DELETE FROM addresses WHERE id = ?"
+        cursor.execute(query, (id_direccion,))
+        affected_rows = cursor.rowcount
+
+    return affected_rows
 
 
 def list_addresses() -> list:
@@ -99,4 +160,10 @@ def list_addresses() -> list:
     - list: Lista de diccionarios, donde cada diccionario representa una dirección.
     - Lista vacía si no hay direcciones en la base de datos.
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = "SELECT * FROM addresses"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+    return [dict(row) for row in rows]
