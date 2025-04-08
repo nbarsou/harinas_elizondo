@@ -7,9 +7,12 @@ y generar salidas en formato JSON para ciertos datos de clientes.
 También incluye funcionalidades para desactivar o eliminar clientes según reglas personalizadas.
 """
 
-from db import db_connection  # Se utiliza el context manager para la conexión, similar a user_service.py
+from db import (
+    db_connection,
+)  # Se utiliza el context manager para la conexión, similar a user_service.py
 import os
 import json
+
 
 def create_client(
     nombre: str,
@@ -42,28 +45,32 @@ def create_client(
     with db_connection() as conn:
         cursor = conn.cursor()
         query = """
-            INSERT INTO clients (
+            INSERT INTO CLIENTE(
                 nombre, rfc, nombre_contacto, correo_contacto, 
                 requiere_certificado, activo, contrasena, motivo_baja, configuracion_json
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
-        cursor.execute(query, (
-            nombre,
-            rfc,
-            nombre_contacto,
-            correo_contacto,
-            1 if requiere_certificado else 0,
-            1 if activo else 0,
-            contrasena,
-            motivo_baja,
-            configuracion_json
-        ))
+        cursor.execute(
+            query,
+            (
+                nombre,
+                rfc,
+                nombre_contacto,
+                correo_contacto,
+                1 if requiere_certificado else 0,
+                1 if activo else 0,
+                contrasena,
+                motivo_baja,
+                configuracion_json,
+            ),
+        )
         client_id = cursor.lastrowid
 
     if client_id:
         return client_id
     return None
+
 
 def get_client(client_id: int) -> dict | None:
     """
@@ -78,13 +85,14 @@ def get_client(client_id: int) -> dict | None:
     """
     with db_connection() as conn:
         cursor = conn.cursor()
-        query = "SELECT * FROM clients WHERE id = ?"
+        query = "SELECT * FROM CLIENTE WHERE id = ?"
         cursor.execute(query, (client_id,))
         row = cursor.fetchone()
 
     if row:
         return dict(row)
     return None
+
 
 def update_client(
     client_id: int,
@@ -117,25 +125,29 @@ def update_client(
     with db_connection() as conn:
         cursor = conn.cursor()
         query = """
-            UPDATE clients 
+            UPDATE CLIENTE 
             SET nombre = ?, rfc = ?, nombre_contacto = ?, correo_contacto = ?,
                 requiere_certificado = ?, activo = ?, motivo_baja = ?, configuracion_json = ?
             WHERE id = ?
         """
-        cursor.execute(query, (
-            nombre,
-            rfc,
-            nombre_contacto,
-            correo_contacto,
-            1 if requiere_certificado else 0,
-            1 if activo else 0,
-            motivo_baja,
-            configuracion_json,
-            client_id
-        ))
+        cursor.execute(
+            query,
+            (
+                nombre,
+                rfc,
+                nombre_contacto,
+                correo_contacto,
+                1 if requiere_certificado else 0,
+                1 if activo else 0,
+                motivo_baja,
+                configuracion_json,
+                client_id,
+            ),
+        )
         affected_rows = cursor.rowcount
 
     return affected_rows
+
 
 def deactivate_client(client_id: int, motivo_baja: str) -> int:
     """
@@ -150,11 +162,12 @@ def deactivate_client(client_id: int, motivo_baja: str) -> int:
     """
     with db_connection() as conn:
         cursor = conn.cursor()
-        query = "UPDATE clients SET activo = 0, motivo_baja = ? WHERE id = ?"
+        query = "UPDATE CLIENTE SET activo = 0, motivo_baja = ? WHERE id = ?"
         cursor.execute(query, (motivo_baja, client_id))
         affected_rows = cursor.rowcount
 
     return affected_rows
+
 
 def delete_client(client_id: int) -> int:
     """
@@ -168,11 +181,12 @@ def delete_client(client_id: int) -> int:
     """
     with db_connection() as conn:
         cursor = conn.cursor()
-        query = "DELETE FROM clients WHERE id = ?"
+        query = "DELETE FROM CLIENTE WHERE id = ?"
         cursor.execute(query, (client_id,))
         affected_rows = cursor.rowcount
 
     return affected_rows
+
 
 def list_clients() -> list:
     """
@@ -184,11 +198,12 @@ def list_clients() -> list:
     """
     with db_connection() as conn:
         cursor = conn.cursor()
-        query = "SELECT * FROM clients"
+        query = "SELECT * FROM CLIENTE"
         cursor.execute(query)
         rows = cursor.fetchall()
 
     return [dict(row) for row in rows]
+
 
 # ----------------------------------------------
 # Funciones para gestionar archivos de configuración
@@ -198,21 +213,18 @@ def list_clients() -> list:
 CONFIG_DIR = os.path.dirname(__file__)
 
 # Ruta completa al archivo de parámetros por defecto
-DEFAULT_CONFIG_FILE = os.path.join(CONFIG_DIR, 'parametros_default.json')
+DEFAULT_CONFIG_FILE = os.path.join(CONFIG_DIR, "parametros_default.json")
+
 
 def create_default_config_file():
     """
     Crea el archivo parametros_default.json con los parámetros por defecto.
     Esta función se debe llamar una sola vez al iniciar el programa para crear el archivo default.
     """
-    default_params = {
-        "p1_sup": 1,
-        "p1_inf": 0,
-        "p2_inf": 5,
-        "p3_sup": 10
-    }
+    default_params = {"p1_sup": 1, "p1_inf": 0, "p2_inf": 5, "p3_sup": 10}
     with open(DEFAULT_CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(default_params, f, indent=4)
+
 
 def save_client_specific_config(client_id: int, config: dict):
     """
