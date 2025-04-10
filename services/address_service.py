@@ -35,7 +35,7 @@ def create_address(
     with db_connection() as conn:
         cursor = conn.cursor()
         query = """
-            INSERT INTO addresses (
+            INSERT INTO DIRECCION_CLIENTE (
                 id_cliente, calle, num_exterior, num_interior, 
                 codigo_postal, delegacion, estado
             )
@@ -70,7 +70,7 @@ def get_address(id_direccion: int) -> dict | None:
     """
     with db_connection() as conn:
         cursor = conn.cursor()
-        query = "SELECT * FROM addresses WHERE id = ?"
+        query = "SELECT * FROM DIRECCION_CLIENTE WHERE id_direccion = ?"
         cursor.execute(query, (id_direccion,))
         row = cursor.fetchone()
 
@@ -108,7 +108,7 @@ def update_address(
     with db_connection() as conn:
         cursor = conn.cursor()
         query = """
-            UPDATE addresses 
+            UPDATE DIRECCION_CLIENTE
             SET id_cliente = ?, 
                 calle = ?, 
                 num_exterior = ?, 
@@ -116,7 +116,7 @@ def update_address(
                 codigo_postal = ?, 
                 delegacion = ?, 
                 estado = ?
-            WHERE id = ?
+            WHERE id_direccion = ?
         """
         cursor.execute(query, (
             id_cliente,
@@ -145,7 +145,7 @@ def delete_address(id_direccion: int) -> int:
     """
     with db_connection() as conn:
         cursor = conn.cursor()
-        query = "DELETE FROM addresses WHERE id = ?"
+        query = "DELETE FROM DIRECCION_CLIENTE WHERE id_direccion = ?"
         cursor.execute(query, (id_direccion,))
         affected_rows = cursor.rowcount
 
@@ -162,7 +162,7 @@ def list_addresses() -> list:
     """
     with db_connection() as conn:
         cursor = conn.cursor()
-        query = "SELECT * FROM addresses"
+        query = "SELECT * FROM DIRECCION_CLIENTE"
         cursor.execute(query)
         rows = cursor.fetchall()
 
