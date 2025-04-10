@@ -35,7 +35,7 @@ def create_inspection(
     with db_connection() as conn:
         cursor = conn.cursor()
         query = """
-            INSERT INTO inspections (
+            INSERT INTO INSPECCION (
                 numero_lote, fecha, id_equipo, secuencia, 
                 parametros_analizados, tipo_inspeccion, id_laboratorista
             )
@@ -73,7 +73,7 @@ def get_inspection(id_inspeccion: int) -> dict | None:
         query = """
             SELECT id_inspeccion, numero_lote, fecha, id_equipo, secuencia, 
                    parametros_analizados, tipo_inspeccion, id_laboratorista
-            FROM inspections
+            FROM INSPECCION
             WHERE id_inspeccion = ?
         """
         cursor.execute(query, (id_inspeccion,))
@@ -113,7 +113,7 @@ def update_inspection(
     with db_connection() as conn:
         cursor = conn.cursor()
         query = """
-            UPDATE inspections
+            UPDATE INSPECCION
             SET numero_lote = ?, fecha = ?, id_equipo = ?, secuencia = ?,
                 parametros_analizados = ?, tipo_inspeccion = ?, id_laboratorista = ?
             WHERE id_inspeccion = ?
@@ -145,7 +145,7 @@ def delete_inspection(id_inspeccion: int) -> int:
     """
     with db_connection() as conn:
         cursor = conn.cursor()
-        query = "DELETE FROM inspections WHERE id_inspeccion = ?"
+        query = "DELETE FROM INSPECCION WHERE id_inspeccion = ?"
         cursor.execute(query, (id_inspeccion,))
         affected_rows = cursor.rowcount
 
@@ -165,7 +165,7 @@ def list_inspections() -> list:
         query = """
             SELECT id_inspeccion, numero_lote, fecha, id_equipo, secuencia, 
                    parametros_analizados, tipo_inspeccion, id_laboratorista
-            FROM inspections
+            FROM INSPECCION
         """
         cursor.execute(query)
         rows = cursor.fetchall()

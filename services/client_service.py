@@ -9,7 +9,7 @@ También incluye funcionalidades para desactivar o eliminar clientes según regl
 
 from db import (
     db_connection,
-)  # Se utiliza el context manager para la conexión, similar a user_service.py
+)
 import os
 import json
 
@@ -85,7 +85,7 @@ def get_client(client_id: int) -> dict | None:
     """
     with db_connection() as conn:
         cursor = conn.cursor()
-        query = "SELECT * FROM CLIENTE WHERE id = ?"
+        query = "SELECT * FROM CLIENTE WHERE id_cliente = ?"
         cursor.execute(query, (client_id,))
         row = cursor.fetchone()
 
@@ -126,9 +126,15 @@ def update_client(
         cursor = conn.cursor()
         query = """
             UPDATE CLIENTE 
-            SET nombre = ?, rfc = ?, nombre_contacto = ?, correo_contacto = ?,
-                requiere_certificado = ?, activo = ?, motivo_baja = ?, configuracion_json = ?
-            WHERE id = ?
+            SET nombre = ?, 
+                rfc = ?, 
+                nombre_contacto = ?, 
+                correo_contacto = ?,
+                requiere_certificado = ?, 
+                activo = ?, 
+                motivo_baja = ?, 
+                configuracion_json = ?
+            WHERE id_cliente = ?
         """
         cursor.execute(
             query,
@@ -162,7 +168,7 @@ def deactivate_client(client_id: int, motivo_baja: str) -> int:
     """
     with db_connection() as conn:
         cursor = conn.cursor()
-        query = "UPDATE CLIENTE SET activo = 0, motivo_baja = ? WHERE id = ?"
+        query = "UPDATE CLIENTE SET activo = 0, motivo_baja = ? WHERE id_cliente = ?"
         cursor.execute(query, (motivo_baja, client_id))
         affected_rows = cursor.rowcount
 
@@ -181,7 +187,7 @@ def delete_client(client_id: int) -> int:
     """
     with db_connection() as conn:
         cursor = conn.cursor()
-        query = "DELETE FROM CLIENTE WHERE id = ?"
+        query = "DELETE FROM CLIENTE WHERE id_cliente = ?"
         cursor.execute(query, (client_id,))
         affected_rows = cursor.rowcount
 
@@ -220,8 +226,26 @@ def create_default_config_file():
     """
     Crea el archivo parametros_default.json con los parámetros por defecto.
     Esta función se debe llamar una sola vez al iniciar el programa para crear el archivo default.
+    
+    El formato de los parámetros es:
+        "p1": {"inf": 10, "sup": 20},
+        "p2": {"inf": 0.5, "sup": 1},
+        "p3": {"inf": 10, "sup": 30}
     """
-    default_params = {"p1_sup": 1, "p1_inf": 0, "p2_inf": 5, "p3_sup": 10}
+    default_params = {
+        "p1": {
+            "inf": 10,
+            "sup": 20
+        },
+        "p2": {
+            "inf": 0.5,
+            "sup": 1
+        },
+        "p3": {
+            "inf": 10,
+            "sup": 30
+        }
+    }
     with open(DEFAULT_CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(default_params, f, indent=4)
 
@@ -232,7 +256,11 @@ def save_client_specific_config(client_id: int, config: dict):
 
     Parámetros:
       - client_id (int): ID del cliente.
-      - config (dict): Diccionario con los parámetros ingresados por el cliente.
+      - config (dict): Diccionario con los parámetros de configuración del cliente.
+                         Se espera que siga el formato:
+                            "p1": {"inf": valor, "sup": valor},
+                            "p2": {"inf": valor, "sup": valor},
+                            "p3": {"inf": valor, "sup": valor}
 
     Se crea o sobrescribe el archivo {id_cliente}.json en el mismo directorio.
     """
