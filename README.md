@@ -113,7 +113,7 @@ Este proyecto usa `pytest` para ejecutar pruebas. Todas las pruebas están en la
 ### **Ejecutar Todas las Pruebas**
 
 ```bash
-python - pytest
+python -m pytest
 ```
 
 ### **Ejecutar una Prueba Individual**

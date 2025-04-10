@@ -8,34 +8,36 @@ Here’s your **updated checklist** with the **functions listed as sub-tasks** u
 
 ### **Nivel 1:**
 
-- [ ] `client_service.py`
+- [x] `client_service.py`
 
-  - [ ] `create_client`
-  - [ ] `get_client`
-  - [ ] `update_client`
-  - [ ] `delete_client`
-  - [ ] `list_clients`
-  - [ ] `deactivate_client`
+  - [x] `create_client`
+  - [x] `get_client`
+  - [x] `update_client`
+  - [x] `delete_client`
+  - [x] `list_clients`
+  - [x] `deactivate_client`
+  - [ ] Create test for `create_default_config_file`
+  - [ ] Create test for `save_client_specific_config`
 
-- [ ] `user_service.py`
+- [x] `user_service.py`
 
-  - [ ] `create_user`
-  - [ ] `get_user`
-  - [ ] `update_user`
-  - [ ] `delete_user`
-  - [ ] `list_users`
+  - [x] `create_user`
+  - [x] `get_user`
+  - [x] `update_user`
+  - [x] `delete_user`
+  - [x] `list_users`
 
 ---
 
 ### **Nivel 2:**
 
-- [ ] `address_service.py`
+- [x] `address_service.py`
 
-  - [ ] `create_address`
-  - [ ] `get_address`
-  - [ ] `update_address`
-  - [ ] `delete_address`
-  - [ ] `list_addresses`
+  - [x] `create_address`
+  - [x] `get_address`
+  - [x] `update_address`
+  - [x] `delete_address`
+  - [x] `list_addresses`
 
 - [ ] `certificate_service.py`
 
@@ -57,10 +59,10 @@ Here’s your **updated checklist** with the **functions listed as sub-tasks** u
 - [ ] `inspection_service.py`
 
   - [ ] `create_inspection`
-  - [ ] `get_inspection`
-  - [ ] `update_inspection`
-  - [ ] `delete_inspection`
-  - [ ] `list_inspections`
+  - [x] `get_inspection`
+  - [x] `update_inspection`
+  - [x] `delete_inspection`
+  - [x] `list_inspections`
 
 - [ ] `parameters_service.py`
 
