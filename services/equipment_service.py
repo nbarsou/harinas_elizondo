@@ -2,8 +2,8 @@
 Servicio de Equipos
 
 Este servicio proporciona operaciones CRUD para gestionar registros de equipos en la base de datos.
-Permite recuperar todos los IDs de los equipos, obtener la tabla completa o filtrar por parámetros específicos.
-Además, incluye funciones para marcar equipos como inactivos o darlos de baja permanentemente.
+Permite recuperar todos los equipos, obtener un equipo por ID, actualizar su información, eliminarlo,
+así como marcar un equipo como inactivo (dar de baja) asignándole una causa de baja.
 """
 
 from db import db_connection
@@ -25,13 +25,13 @@ def create_equipment(
     encargado: int | None,
     estado: str,
     causa_baja: str | None,
-) -> int:
+) -> int | None:
     """
     Crea un nuevo equipo en la base de datos.
 
     Parámetros:
     - tipo (str): Tipo de equipo.
-    - clave (str | None): Clave única del equipo (puede ser `None` si no aplica).
+    - clave (str | None): Clave única del equipo (puede ser None si no aplica).
     - marca (str | None): Marca del equipo.
     - modelo (str | None): Modelo del equipo.
     - serie (str | None): Número de serie del equipo.
@@ -47,9 +47,41 @@ def create_equipment(
     - causa_baja (str | None): Motivo de baja del equipo (si aplica).
 
     Retorna:
-    - int: ID del equipo creado.
+    - int: ID del equipo creado, o None si no se pudo crear.
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = """
+            INSERT INTO EQUIPO_LABORATORIO (
+                tipo, clave, marca, modelo, serie,
+                descripcion_larga, descripcion_corta, proveedor,
+                fecha_adquisicion, garantia, vigencia_garantia,
+                ubicacion, encargado, estado, causa_baja
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        cursor.execute(query, (
+            tipo,
+            clave,
+            marca,
+            modelo,
+            serie,
+            descripcion_larga,
+            descripcion_corta,
+            proveedor,
+            fecha_adquisicion,
+            garantia,
+            vigencia_garantia,
+            ubicacion,
+            encargado,
+            estado,
+            causa_baja
+        ))
+        equipment_id = cursor.lastrowid
+
+    if equipment_id:
+        return equipment_id
+    return None
 
 
 def get_equipment(id_equipo: int) -> dict | None:
@@ -63,7 +95,15 @@ def get_equipment(id_equipo: int) -> dict | None:
     - dict: Información del equipo si existe.
     - None: Si el equipo no se encuentra en la base de datos.
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = "SELECT * FROM EQUIPO_LABORATORIO WHERE id_equipo = ?"
+        cursor.execute(query, (id_equipo,))
+        row = cursor.fetchone()
+
+    if row:
+        return dict(row)
+    return None
 
 
 def update_equipment(
@@ -108,7 +148,37 @@ def update_equipment(
     Retorna:
     - int: Número de filas afectadas (1 si se actualizó, 0 si no se encontró el equipo).
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = """
+            UPDATE EQUIPO_LABORATORIO
+            SET tipo = ?, clave = ?, marca = ?, modelo = ?, serie = ?,
+                descripcion_larga = ?, descripcion_corta = ?, proveedor = ?,
+                fecha_adquisicion = ?, garantia = ?, vigencia_garantia = ?,
+                ubicacion = ?, encargado = ?, estado = ?, causa_baja = ?
+            WHERE id_equipo = ?
+        """
+        cursor.execute(query, (
+            tipo,
+            clave,
+            marca,
+            modelo,
+            serie,
+            descripcion_larga,
+            descripcion_corta,
+            proveedor,
+            fecha_adquisicion,
+            garantia,
+            vigencia_garantia,
+            ubicacion,
+            encargado,
+            estado,
+            causa_baja,
+            id_equipo
+        ))
+        affected_rows = cursor.rowcount
+
+    return affected_rows
 
 
 def delete_equipment(id_equipo: int) -> int:
@@ -121,7 +191,13 @@ def delete_equipment(id_equipo: int) -> int:
     Retorna:
     - int: Número de filas afectadas (1 si el equipo fue eliminado, 0 si no existía).
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = "DELETE FROM EQUIPO_LABORATORIO WHERE id_equipo = ?"
+        cursor.execute(query, (id_equipo,))
+        affected_rows = cursor.rowcount
+
+    return affected_rows
 
 
 def list_equipment() -> list:
@@ -132,7 +208,13 @@ def list_equipment() -> list:
     - list: Lista de diccionarios, donde cada diccionario representa un equipo.
     - Lista vacía si no hay equipos en la base de datos.
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = "SELECT * FROM EQUIPO_LABORATORIO"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+    return [dict(row) for row in rows]
 
 
 def deactivate_equipment(id_equipo: int, causa_baja: str) -> int:
@@ -146,4 +228,15 @@ def deactivate_equipment(id_equipo: int, causa_baja: str) -> int:
     Retorna:
     - int: Número de filas afectadas (1 si se desactivó, 0 si el equipo no existía).
     """
-    pass
+    # Actualizamos el estado a "Inactive" y asignamos la causa de baja
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        query = """
+            UPDATE EQUIPO_LABORATORIO 
+            SET estado = 'Inactive', causa_baja = ? 
+            WHERE id_equipo = ?
+        """
+        cursor.execute(query, (causa_baja, id_equipo))
+        affected_rows = cursor.rowcount
+
+    return affected_rows
