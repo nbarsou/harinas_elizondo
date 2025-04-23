@@ -37,3 +37,5 @@ pytest_cache/
 .idea/
 *.swp
 
+# Database 
+*.db 
