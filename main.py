@@ -16,6 +16,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from db import init_db
 from services.user_service import create_user, list_users
 from services.inspection_service import create_inspection, list_inspections
+from services.equipment_service import create_equipment, list_equipment
 
 
 app = Flask(__name__)
@@ -156,13 +157,38 @@ def certification():
 
 
 # ---- EQUIPMENT ----
+@app.route("/equipment/create", methods=["GET", "POST"])
+def register_equipment():
+    if request.method == "POST":
+        try:
+            create_equipment(
+                tipo=request.form["tipo"],
+                clave=request.form["clave"],
+                marca=request.form["marca"],
+                modelo=request.form["modelo"],
+                serie=request.form["serie"],
+                descripcion_larga=request.form["descripcion_larga"],
+                descripcion_corta=request.form["descripcion_corta"],
+                proveedor=request.form["proveedor"],
+                fecha_adquisicion=request.form["fecha_adquisicion"],
+                garantia=request.form["garantia"],
+                vigencia_garantia=request.form["vigencia_garantia"],
+                ubicacion=request.form["ubicacion"],
+                encargado=int(request.form["encargado"]),
+                estado=request.form["estado"],
+                causa_baja=request.form["causa_baja"],
+            )
+            flash("Equipo registrado correctamente", "success")
+            return redirect(url_for("equipment"))
+        except Exception as e:
+            flash(f"Error: {e}", "danger")
+    return render_template("create_equipment.html")
+
+# ---- EQUIPMENT: Ver equipos registrados ----
 @app.route("/equipment")
 def equipment():
-    """
-    Vista de equipos.
-    Permite la administración de los equipos de laboratorio.
-    """
-    return render_template("equipment.html")
+    equipos = list_equipment()
+    return render_template("equipment.html", equipos=equipos)
 
 
 # ---- CLIENTS ----

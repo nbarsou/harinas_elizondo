@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Equipos Registrados{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Equipos Registrados</h2>
+
+{% if equipos %}
+  <div class="table-responsive">
+    <table class="table table-striped table-bordered align-middle">
+      <thead class="table-primary">
+        <tr>
+          <th>ID</th>
+          <th>Tipo</th>
+          <th>Marca</th>
+          <th>Modelo</th>
+          <th>Serie</th>
+          <th>Ubicación</th>
+          <th>Encargado</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for eq in equipos %}
+        <tr>
+          <td>{{ eq.id_equipo }}</td>
+          <td>{{ eq.tipo }}</td>
+          <td>{{ eq.marca }}</td>
+          <td>{{ eq.modelo }}</td>
+          <td>{{ eq.serie }}</td>
+          <td>{{ eq.ubicacion }}</td>
+          <td>{{ eq.encargado }}</td>
+          <td>{{ eq.estado }}</td>
+          <td>
+            <a href="/equipment/edit/{{ eq.id_equipo }}" class="btn btn-sm btn-warning">Editar</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="alert alert-info">No hay equipos registrados todavía.</div>
+{% endif %}
+
+<a href="/equipment/create" class="btn btn-primary mt-3">Registrar nuevo equipo</a>
+{% endblock %}
