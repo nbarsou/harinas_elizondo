@@ -17,7 +17,7 @@ from db import init_db
 import os
 import json
 from services.user_service import create_user, list_users
-from services.client_service import create_client, list_clients
+from services.client_service import create_client, list_clients, get_client, update_client, deactivate_client 
 from services.inspection_service import create_inspection, list_inspections
 
 
@@ -192,12 +192,63 @@ def register_client():
 
 
 # ---- CLIENTS: Ver clientes registrados ----
-@app.route('/clients', methods=['GET'])
+@app.route('/clients')
 def list_clients_route():
     clients = list_clients()
     return render_template('clients.html', clients=clients)
 
+# ---- CLIENTS: Modificar clientes registrados ----
+@app.route('/clients/<int:id>/edit', methods=['POST'])
+def update_client_route(id):
+    # 2.1) Lee los campos enviados por el formulario
+    nombre          = request.form['nombre']
+    rfc             = request.form['rfc']
+    nombre_contacto = request.form['nombre_contacto']
+    correo_contacto = request.form['correo_contacto']
+    requiere_cert   = bool(int(request.form['requiere_certificado']))
+    activo          = bool(int(request.form['activo']))  # viene del hidden
 
+    # 2.2) Recupera el cliente original para obtener motivo_baja y config JSON
+    original = get_client(id)
+    if not original:
+        flash('Cliente no encontrado', 'danger')
+        return redirect(url_for('list_clients_route'))
+
+    motivo_baja          = original.get('motivo_baja')
+    configuracion_json   = original.get('configuracion_json')
+
+    # 2.3) Llama al servicio con todos los parámetros
+    try:
+        updated = update_client(
+            id,
+            nombre,
+            rfc,
+            nombre_contacto,
+            correo_contacto,
+            requiere_cert,       # orden igual al de la firma: requiere_certificado
+            activo,
+            motivo_baja,
+            configuracion_json
+        )
+        if updated:
+            flash('Cliente actualizado correctamente', 'success')
+        else:
+            flash('No se realizaron cambios', 'info')
+    except Exception as e:
+        flash(f'Error al actualizar cliente: {e}', 'danger')
+
+    return redirect(url_for('list_clients_route'))
+
+# ---- CLIENTS: Dar de baja clientes registrados ----
+@app.route('/clients/<int:id>/deactivate', methods=['POST'])
+def deactivate_client_route(id):
+    motivo = request.form['motivo_baja']
+    try:
+        deactivate_client(id, motivo)
+        flash('Cliente dado de baja', 'warning')
+    except Exception as e:
+        flash(f'Error al dar de baja cliente: {e}', 'danger')
+    return redirect(url_for('list_clients_route'))
 
 
 # ---- USERS ----
