@@ -119,7 +119,16 @@ def delete_user(user_id: int) -> int:
         affected_rows = cursor.rowcount
     return affected_rows
 
-
+def authenticate_user(mail, contrasena):
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id_usuario, nombre FROM usuario WHERE mail = ? AND contrasena = ?",
+            (mail, contrasena)
+        )
+        usuario = cursor.fetchone()
+    return usuario
+    
 def list_users() -> list:
     """
     Obtiene la lista de todos los usuarios en la base de datos.

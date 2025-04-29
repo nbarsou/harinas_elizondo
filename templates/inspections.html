@@ -9,6 +9,7 @@
             <thead class="table-light">
                 <tr>
                     <th>ID</th>
+                    <th>ID Laboratorista</th>
                     <th>Lote</th>
                     <th>Secuencia</th>
                     <th>Tipo</th>
@@ -21,6 +22,7 @@
                 {% for ins in inspections %}
                 <tr>
                     <td>{{ ins.id_inspeccion }}</td>
+                    <td>{{ ins.id_laboratorista }}</td>
                     <td>{{ ins.numero_lote }}</td>
                     <td>{{ ins.secuencia }}</td>
                     <td>{{ ins.tipo_inspeccion }}</td>
