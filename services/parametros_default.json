@@ -1,14 +1,14 @@
 {
-    "p1": {
-        "inf": 10,
-        "sup": 20
+    "farinografo": {
+        "absorcion_de_agua": {"inf": 55, "sup": 65},
+        "tiempo_de_desarrollo": {"inf": 1.5, "sup": 3.0},
+        "estabilidad": {"inf": 5, "sup": 10},
+        "indice_de_tolerancia": {"inf": 70, "sup": 110}
     },
-    "p2": {
-        "inf": 0.5,
-        "sup": 1
-    },
-    "p3":{
-        "inf": 10,
-        "sup": 30
+    "alveografo": {
+        "W": {"inf": 180, "sup": 350},
+        "P": {"inf": 70, "sup": 130},
+        "L": {"inf": 90, "sup": 140},
+        "relacion_P_L": {"inf": 0.5, "sup": 1.0}
     }
 }

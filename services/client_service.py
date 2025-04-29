@@ -252,23 +252,37 @@ def create_default_config_file():
     Crea el archivo parametros_default.json con los parámetros por defecto.
     Esta función se debe llamar una sola vez al iniciar el programa para crear el archivo default.
     
-    El formato de los parámetros es:
-        "p1": {"inf": 10, "sup": 20},
-        "p2": {"inf": 0.5, "sup": 1},
-        "p3": {"inf": 10, "sup": 30}
+    Parámetros:
+      - client_id (int): ID del cliente.
+      - config (dict): Diccionario con los parámetros de configuración del cliente.
+        Se espera que siga el siguiente formato:
+           {
+             "farinografo": {
+                "absorcion_de_agua": {"inf": <valor>, "sup": <valor>},
+                "tiempo_de_desarrollo": {"inf": <valor>, "sup": <valor>},
+                "estabilidad": {"inf": <valor>, "sup": <valor>},
+                "indice_de_tolerancia": {"inf": <valor>, "sup": <valor>}
+             },
+             "alveografo": {
+                "W": {"inf": <valor>, "sup": <valor>},
+                "P": {"inf": <valor>, "sup": <valor>},
+                "L": {"inf": <valor>, "sup": <valor>},
+                "relacion_P_L": {"inf": <valor>, "sup": <valor>}
+             }
+           }
     """
     default_params = {
-        "p1": {
-            "inf": 10,
-            "sup": 20
+        "farinografo": {
+            "absorcion_de_agua": {"inf": 55, "sup": 65},
+            "tiempo_de_desarrollo": {"inf": 1.5, "sup": 3.0},
+            "estabilidad": {"inf": 5, "sup": 10},
+            "indice_de_tolerancia": {"inf": 70, "sup": 110}
         },
-        "p2": {
-            "inf": 0.5,
-            "sup": 1
-        },
-        "p3": {
-            "inf": 10,
-            "sup": 30
+        "alveografo": {
+            "W": {"inf": 180, "sup": 350},
+            "P": {"inf": 70, "sup": 130},
+            "L": {"inf": 90, "sup": 140},
+            "relacion_P_L": {"inf": 0.5, "sup": 1.0}
         }
     }
     with open(DEFAULT_CONFIG_FILE, "w", encoding="utf-8") as f:
@@ -282,13 +296,41 @@ def save_client_specific_config(client_id: int, config: dict):
     Parámetros:
       - client_id (int): ID del cliente.
       - config (dict): Diccionario con los parámetros de configuración del cliente.
-                         Se espera que siga el formato:
-                            "p1": {"inf": valor, "sup": valor},
-                            "p2": {"inf": valor, "sup": valor},
-                            "p3": {"inf": valor, "sup": valor}
+        Se espera que siga el siguiente formato:
+           {
+             "farinografo": {
+                "absorcion_de_agua": {"inf": <valor>, "sup": <valor>},
+                "tiempo_de_desarrollo": {"inf": <valor>, "sup": <valor>},
+                "estabilidad": {"inf": <valor>, "sup": <valor>},
+                "indice_de_tolerancia": {"inf": <valor>, "sup": <valor>}
+             },
+             "alveografo": {
+                "W": {"inf": <valor>, "sup": <valor>},
+                "P": {"inf": <valor>, "sup": <valor>},
+                "L": {"inf": <valor>, "sup": <valor>},
+                "relacion_P_L": {"inf": <valor>, "sup": <valor>}
+             }
+           }
 
     Se crea o sobrescribe el archivo {id_cliente}.json en el mismo directorio.
     """
+
     file_path = os.path.join(CONFIG_DIR, f"{client_id}.json")
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=4)
+
+    """
+    Referencias parametros (tomar 2 de las siguientes) 
+    American Association of Cereal Chemists International. (2010). AACC International Approved Methods of Analysis. AACC International. Recuperado de http://www.aaccnet.org/
+
+    Corsini, D., & Gujral, H. S. (2005). Calidad y evaluación de la harina de trigo. Journal of Cereal Science, 41(2), 128–137.
+
+    Rodríguez, F. G., Martínez, A., & López, G. (2012). Normas internacionales para la calidad de la harina de trigo. Revista de Tecnología de Cereales, 15(3), 45–57.
+    
+    Molinos del Norte. (2020). Ficha técnica: Análisis reológico de la harina de trigo. Recuperado de http://www.molinosdelnorte.com/analisis_reologico
+
+    Organización de las Naciones Unidas para la Agricultura y la Alimentación. (2019). Normas internacionales para la harina de trigo: Métodos reológicos. FAO. Recuperado de http://www.fao.org/standards
+
+    Pérez, M. (2021). Evaluación reológica de la harina de trigo: Un estudio aplicado [Tesis de maestría, Universidad Nacional Agraria La Molina]. Repositorio Digital UNALM.
+    
+    """
