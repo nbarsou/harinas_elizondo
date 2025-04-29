@@ -54,7 +54,14 @@
                     <li class="nav-item"><a class="nav-link" href="/sales">Ventas</a></li>
                     <li class="nav-item"><a class="nav-link" href="/certifications">Certificados</a></li>
                     <li class="nav-item"><a class="nav-link" href="/reports">Reportes</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/equipment">Equipos</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="equipmentDropdown" role="button"
+                            data-bs-toggle="dropdown">Equipos</a>
+                            <ul class="dropdown-menu" aria-labelledby="equipmentDropdown">
+                            <li><a class="dropdown-item" href="/equipment/create">Crear equipo</a></li>
+                            <li><a class="dropdown-item" href="/equipment">Ver equipos</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="usersDd" role="button"
                             data-bs-toggle="dropdown">Users</a>

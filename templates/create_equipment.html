@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Registrar Nuevo Equipo{% endblock %}
+{% block content %}
+<h2 class="mt-4">Registrar Nuevo Equipo</h2>
+<form method="POST" class="card p-4 shadow-sm">
+  <div class="row g-3">
+    <div class="col-md-6"><label class="form-label">Tipo:</label><input name="tipo" class="form-control" required></div>
+    <div class="col-md-6"><label class="form-label">Clave:</label><input name="clave" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Marca:</label><input name="marca" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Modelo:</label><input name="modelo" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Serie:</label><input name="serie" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Descripción Larga:</label><input name="descripcion_larga" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Descripción Corta:</label><input name="descripcion_corta" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Proveedor:</label><input name="proveedor" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Fecha de Adquisición:</label><input type="date" name="fecha_adquisicion" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Garantía:</label><input name="garantia" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Vigencia Garantía:</label><input name="vigencia_garantia" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Ubicación:</label><input name="ubicacion" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Responsable (ID usuario):</label><input name="encargado" type="number" class="form-control"></div>
+  </div>
+  <input type="hidden" name="estado" value="activo">
+  <input type="hidden" name="causa_baja" value="">
+  <div class="mt-4">
+    <button type="submit" class="btn btn-primary">Dar de alta equipo</button>
+  </div>
+</form>
+{% endblock %}
