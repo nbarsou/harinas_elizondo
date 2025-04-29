@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Editar Equipo{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Editar Equipo</h2>
+
+<form method="POST" class="card p-4 shadow-sm">
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Tipo:</label>
+      <input name="tipo" class="form-control" value="{{ equipo.tipo }}" required>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Clave:</label>
+      <input name="clave" class="form-control" value="{{ equipo.clave }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Marca:</label>
+      <input name="marca" class="form-control" value="{{ equipo.marca }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Modelo:</label>
+      <input name="modelo" class="form-control" value="{{ equipo.modelo }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Número de Serie:</label>
+      <input name="serie" class="form-control" value="{{ equipo.serie }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Descripción Larga:</label>
+      <input name="descripcion_larga" class="form-control" value="{{ equipo.descripcion_larga }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Descripción Corta:</label>
+      <input name="descripcion_corta" class="form-control" value="{{ equipo.descripcion_corta }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Proveedor:</label>
+      <input name="proveedor" class="form-control" value="{{ equipo.proveedor }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Fecha de Adquisición:</label>
+      <input type="date" name="fecha_adquisicion" class="form-control" value="{{ equipo.fecha_adquisicion }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Garantía:</label>
+      <input name="garantia" class="form-control" value="{{ equipo.garantia }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Vigencia Garantía:</label>
+      <input name="vigencia_garantia" class="form-control" value="{{ equipo.vigencia_garantia }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Ubicación:</label>
+      <input name="ubicacion" class="form-control" value="{{ equipo.ubicacion }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Encargado (ID usuario):</label>
+      <input name="encargado" type="number" class="form-control" value="{{ equipo.encargado }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Estado:</label>
+      <select name="estado" class="form-select">
+        <option value="Operativo" {% if equipo.estado == "Operativo" %}selected{% endif %}>Operativo</option>
+        <option value="Mantenimiento" {% if equipo.estado == "Mantenimiento" %}selected{% endif %}>Mantenimiento</option>
+        <option value="Inactivo" {% if equipo.estado == "Inactivo" %}selected{% endif %}>Inactivo</option>
+        <option value="baja" {% if equipo.estado == "baja" %}selected{% endif %}>Dar de baja</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="mt-4 d-flex justify-content-between">
+    <button type="submit" class="btn btn-success">Guardar cambios</button>
+    <a href="/equipment" class="btn btn-secondary">Cancelar</a>
+  </div>
+</form>
+{% endblock %}
