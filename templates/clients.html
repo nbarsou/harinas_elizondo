@@ -29,19 +29,179 @@
                     <td>{{ 'Sí' if c.activo else 'No' }}</td>
                     <td>{{ 'Sí' if c.requiere_certificado else 'No' }}</td>
                     <td class="text-center">
-                        <!-- Editar / Eliminar -->
+                        <button type="button" class="btn btn-sm btn-secondary me-1" data-bs-toggle="modal"
+                            data-bs-target="#editModal{{ c.id_cliente }}">Editar</button>
+                        <button type="button" class="btn btn-sm btn-danger me-1" data-bs-toggle="modal"
+                            data-bs-target="#deactivateModal{{ c.id_cliente }}">Dar de Baja</button>
+                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal"
+                            data-bs-target="#viewModal{{ c.id_cliente }}">Ver</button>
                     </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="8" class="text-center py-4">No hay clientes registrados.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
     <div class="p-4 text-end">
-        <a href="{{ url_for('register_client') }}" class="btn btn-primary">Dar de Alta Cliente</a>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createClientModal">Dar de
+            Alta Cliente</button>
     </div>
 </div>
+
+<!-- Modales para cada cliente -->
+{% for c in clients %}
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal{{ c.id_cliente }}" tabindex="-1" aria-labelledby="editLabel{{ c.id_cliente }}"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form action="{{ url_for('update_client_route', id=c.id_cliente) }}" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editLabel{{ c.id_cliente }}">Editar Cliente - {{ c.nombre }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre del Cliente</label>
+                            <input type="text" name="nombre" class="form-control" value="{{ c.nombre }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">RFC</label>
+                            <input type="text" name="rfc" class="form-control" value="{{ c.rfc }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre de Contacto</label>
+                            <input type="text" name="nombre_contacto" class="form-control"
+                                value="{{ c.nombre_contacto }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Correo de Contacto</label>
+                            <input type="email" name="correo_contacto" class="form-control"
+                                value="{{ c.correo_contacto }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Activo</label>
+                            <input type="hidden" name="activo" value="{{ c.activo|int }}">
+                            <select class="form-select" disabled>
+                                <option value="1" {% if c.activo %} selected{% endif %}>Sí</option>
+                                <option value="0" {% if not c.activo %} selected{% endif %}>No</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">¿Requiere certificado?</label>
+                            <select name="requiere_certificado" class="form-select">
+                                <option value="0" {% if not c.requiere_certificado %} selected{% endif %}>No</option>
+                                <option value="1" {% if c.requiere_certificado %} selected{% endif %}>Sí</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Deactivate Modal -->
+<div class="modal fade" id="deactivateModal{{ c.id_cliente }}" tabindex="-1"
+    aria-labelledby="deactivateLabel{{ c.id_cliente }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('deactivate_client_route', id=c.id_cliente) }}" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deactivateLabel{{ c.id_cliente }}">Causa de baja - {{ c.nombre }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="motivo{{ c.id_cliente }}" class="form-label">Motivo de baja</label>
+                        <textarea id="motivo{{ c.id_cliente }}" name="motivo_baja" class="form-control" rows="3"
+                            required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Confirmar Baja</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Modal -->
+<div class="modal fade" id="viewModal{{ c.id_cliente }}" tabindex="-1" aria-labelledby="viewLabel{{ c.id_cliente }}"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewLabel{{ c.id_cliente }}">Información Cliente - {{ c.nombre }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row">
+                    <dt class="col-sm-3">ID</dt>
+                    <dd class="col-sm-9">{{ c.id_cliente }}</dd>
+                    <dt class="col-sm-3">Nombre</dt>
+                    <dd class="col-sm-9">{{ c.nombre }}</dd>
+                    <dt class="col-sm-3">RFC</dt>
+                    <dd class="col-sm-9">{{ c.rfc or '-' }}</dd>
+                    <dt class="col-sm-3">Contacto</dt>
+                    <dd class="col-sm-9">{{ c.nombre_contacto or '-' }}</dd>
+                    <dt class="col-sm-3">Email</dt>
+                    <dd class="col-sm-9">{{ c.correo_contacto or '-' }}</dd>
+                    <dt class="col-sm-3">Activo</dt>
+                    <dd class="col-sm-9">{{ 'Sí' if c.activo else 'No' }}</dd>
+                    <dt class="col-sm-3">Certificado</dt>
+                    <dd class="col-sm-9">
+                        {% if not c.requiere_certificado %}
+                        No requiere certificado
+                        {% elif '"alveografo"' in c.configuracion_json %}
+                        Parámetros internacionales (rangos estándar)
+                        {% else %}
+                        Parámetros personalizados
+                        {% endif %}
+                    </dd>
+                    {% if c.motivo_baja %}<dt class="col-sm-3">Motivo Baja</dt>
+                    <dd class="col-sm-9">{{ c.motivo_baja }}</dd>{% endif %}
+                </dl>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endfor %}
+
+<!-- Modal para crear cliente en pop-up -->
+<div class="modal fade" id="createClientModal" tabindex="-1" aria-labelledby="createClientLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createClientLabel">Dar de Alta Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Incluye el formulario inline para no romper base.html -->
+                <h2 class="mb-4">Dar de Alta Cliente</h2>
+                <div class="card shadow-sm p-4">
+                    <form action="{{ url_for('register_client') }}" method="POST">
+                        <!-- (Copia aquí exactamente los mismos campos y script de create_client.html) -->
+                        <div class="row g-3">
+                            <!-- ... campos ... -->
+                        </div>
+                        <!-- toggle params -->
+                        <!-- botones -->
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

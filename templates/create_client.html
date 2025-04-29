@@ -1,9 +1,10 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
 {% block title %}Dar de Alta Cliente{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Dar de Alta Cliente</h2>
 <div class="card shadow-sm p-4">
+    <h2 class="mb-4">Dar de Alta Cliente</h2>
     <form action="{{ url_for('register_client') }}" method="POST">
         <div class="row g-3">
             <!-- Nombre, RFC, Contacto y Email -->
@@ -85,7 +86,7 @@
 
         <!-- Botones -->
         <div class="mt-4 text-end">
-            <a href="{{ url_for('list_clients_route') }}" class="btn btn-secondary me-2">Cancelar</a>
+            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancelar</button>
             <button type="submit" class="btn btn-success">Dar de Alta Cliente</button>
         </div>
     </form>

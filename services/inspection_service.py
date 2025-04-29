@@ -6,55 +6,37 @@ Admite operaciones CRUD, recuperación de todos los IDs de inspecciones y filtra
 """
 
 from db import db_connection
+import json
 
 
-def create_inspection(
-    numero_lote: str,
-    fecha: str,
-    id_equipo: int | None,
-    secuencia: str | None,
-    parametros_analizados: str | None,
-    tipo_inspeccion: str,
-    id_laboratorista: int | None,
-) -> int | None:
-    """
-    Crea una nueva inspección en la base de datos.
+def create_inspection(numero_lote, fecha, id_equipo, secuencia, tipo_inspeccion, parametros_analizados, id_laboratorista):
+     with db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+    INSERT INTO inspeccion (
+        numero_lote, fecha, id_equipo, secuencia, tipo_inspeccion, parametros_analizados, id_laboratorista
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+""", (
+    numero_lote,
+    fecha,
+    id_equipo,
+    secuencia,
+    tipo_inspeccion,
+    json.dumps(parametros_analizados),
+    id_laboratorista
+))
 
-    Parámetros:
-    - numero_lote (str): Número de lote de la inspección.
-    - fecha (str): Fecha de la inspección (Formato: YYYY-MM-DD).
-    - id_equipo (int | None): ID del equipo inspeccionado (puede ser None si no aplica).
-    - secuencia (str | None): Código de secuencia del proceso (puede ser None si no aplica).
-    - parametros_analizados (str | None): Parámetros que fueron analizados (puede ser None si no aplica).
-    - tipo_inspeccion (str): Tipo de inspección (e.g., "Inicial", "Rutina", "Final").
-    - id_laboratorista (int | None): ID del usuario que realizó la inspección (puede ser None si no aplica).
-
-    Retorna:
-    - int: ID de la inspección creada, o None si no se pudo crear.
-    """
+def list_inspections():
     with db_connection() as conn:
         cursor = conn.cursor()
-        query = """
-            INSERT INTO INSPECCION (
-                numero_lote, fecha, id_equipo, secuencia, 
-                parametros_analizados, tipo_inspeccion, id_laboratorista
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """
-        cursor.execute(query, (
-            numero_lote,
-            fecha,
-            id_equipo,
-            secuencia,
-            parametros_analizados,
-            tipo_inspeccion,
-            id_laboratorista
-        ))
-        inspection_id = cursor.lastrowid
-
-    if inspection_id:
-        return inspection_id
-    return None
+        cursor.execute("""
+            SELECT i.id_inspeccion, i.numero_lote, i.secuencia, i.tipo_inspeccion, i.fecha, e.nombre AS equipo_nombre, i.id_laboratorista
+            FROM inspeccion i
+            JOIN equipo_laboratorio e ON i.id_equipo = e.id_equipo
+            ORDER BY i.id_inspeccion DESC
+        """)
+        inspections = cursor.fetchall()
+    return inspections
 
 
 def get_inspection(id_inspeccion: int) -> dict | None:
