@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Lab Harinera Elizondo{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+        }
+
+        .card {
+            border-radius: 0.5rem;
+        }
+
+        .nav-link,
+        .navbar-brand {
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard">Sistema de Laboratorio Harinero</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navMenu">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="clientsDd" role="button"
+                            data-bs-toggle="dropdown">Clientes</a>
+                        <ul class="dropdown-menu" aria-labelledby="clientsDd">
+                            <li><a class="dropdown-item" href="/clients/create">Dar de alta cliente</a></li>
+                            <li><a class="dropdown-item" href="/clients">Ver clientes</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="inspectionsDropdown" role="button" +
+                            data-bs-toggle="dropdown">Inspecciones</a>
+                        <ul class="dropdown-menu" aria-labelledby="inspectionsDropdown">
+                            <li><a class="dropdown-item" href="/inspections/create">Registrar inspección</a></li>
+                            <li><a class="dropdown-item" href="/inspections">Ver inspecciones</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="/sales">Ventas</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/certifications">Certificados</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/reports">Reportes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/equipment">Equipos</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="usersDd" role="button"
+                            data-bs-toggle="dropdown">Users</a>
+                        <ul class="dropdown-menu" aria-labelledby="usersDd">
+                            <li><a class="dropdown-item" href="/users/create">Crear usuario</a></li>
+                            <li><a class="dropdown-item" href="/users">Ver usuarios</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <span class="navbar-text text-white">Juan Pérez ▼</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+    </script>
+</body>
+
+</html>

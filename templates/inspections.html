@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Inspecciones Registradas{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Inspecciones Registradas</h2>
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Lote</th>
+                    <th>Secuencia</th>
+                    <th>Tipo</th>
+                    <th>Fecha</th>
+                    <th>Equipo</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ins in inspections %}
+                <tr>
+                    <td>{{ ins.id_inspeccion }}</td>
+                    <td>{{ ins.numero_lote }}</td>
+                    <td>{{ ins.secuencia }}</td>
+                    <td>{{ ins.tipo_inspeccion }}</td>
+                    <td>{{ ins.fecha }}</td>
+                    <td>{{ ins.equipo_nombre }}</td>
+                    <td class="text-center">
+                        <!-- Editar / Eliminar -->
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-4">No hay inspecciones registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

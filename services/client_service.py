@@ -7,11 +7,25 @@ y generar salidas en formato JSON para ciertos datos de clientes.
 También incluye funcionalidades para desactivar o eliminar clientes según reglas personalizadas.
 """
 
-from db import (
-    db_connection,
-)
+from db import db_connection
 import os
 import json
+
+
+def _build_config_json(use_custom: bool, form: dict, client_id: int) -> str:
+    params = {}
+    if not use_custom:
+        path_default = os.path.join(os.path.dirname(__file__), "parametros_default.json")
+        with open(path_default, "r", encoding="utf-8") as f:
+            params = json.load(f)
+    else:
+        for key, val in form.items():
+            if key.startswith(("alveo_", "fari_")) and val.strip():
+                equipo, param, bound = key.split("_", 2)
+                k = f"{equipo}_{param}"
+                params.setdefault(k, {})[bound] = float(val)
+    params["id_cliente"] = client_id
+    return json.dumps(params, ensure_ascii=False)
 
 
 def create_client(
@@ -23,7 +37,8 @@ def create_client(
     activo: bool,
     contrasena: str,
     motivo_baja: str | None,
-    configuracion_json: str,
+    use_custom_params: bool,
+    form_data: dict
 ) -> int | None:
     """
     Crea un nuevo cliente en la base de datos.
@@ -37,22 +52,22 @@ def create_client(
     - activo (bool): Indica si el cliente está activo (1) o inactivo (0).
     - contrasena (str): Contraseña del cliente (debería estar hasheada en producción).
     - motivo_baja (str | None): Razón de baja si el cliente ha sido inactivado.
-    - configuracion_json (str): Datos de configuración en formato JSON.
+    - use_custom_params (bool): Indica si se usan parámetros personalizados.
+    - form_data (dict): Datos crudos del formulario para construir configuracion_json.
 
     Retorna:
     - int: ID del cliente creado, o None si no se pudo crear.
     """
     with db_connection() as conn:
         cursor = conn.cursor()
-        query = """
+        cursor.execute(
+            """
             INSERT INTO CLIENTE(
                 nombre, rfc, nombre_contacto, correo_contacto, 
                 requiere_certificado, activo, contrasena, motivo_baja, configuracion_json
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """
-        cursor.execute(
-            query,
+            """,
             (
                 nombre,
                 rfc,
@@ -62,14 +77,24 @@ def create_client(
                 1 if activo else 0,
                 contrasena,
                 motivo_baja,
-                configuracion_json,
+                "{}",  # JSON vacío provisional
             ),
         )
         client_id = cursor.lastrowid
 
-    if client_id:
-        return client_id
-    return None
+        if client_id is None:
+            conn.rollback()
+            return None
+
+        # Construir y actualizar JSON con ID incluido
+        configuracion_json = _build_config_json(use_custom_params, form_data, client_id)
+        cursor.execute(
+            "UPDATE CLIENTE SET configuracion_json = ? WHERE id_cliente = ?",
+            (configuracion_json, client_id)
+        )
+        conn.commit()
+
+    return client_id
 
 
 def get_client(client_id: int) -> dict | None:
@@ -293,10 +318,6 @@ def save_client_specific_config(client_id: int, config: dict):
     file_path = os.path.join(CONFIG_DIR, f"{client_id}.json")
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=4)
-
-
-
-
 
     """
     Referencias parametros (tomar 2 de las siguientes) 
