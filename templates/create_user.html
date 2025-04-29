@@ -2,124 +2,41 @@
 {% block title %}Crear Usuario{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Crear Nuevo Usuario</h2>
+<h2 class="mb-4">Dar de alta usuario</h2>
 <div class="card shadow-sm p-4">
     <form action="{{ url_for('register_user') }}" method="POST">
         <div class="row g-3">
-            <!-- Datos básicos -->
             <div class="col-md-6">
-                <label class="form-label">Nombre</label>
-                <input type="text" name="nombre" class="form-control" placeholder="Ej. Ana López" required>
+                <label for="nombre" class="form-label">Nombre</label>
+                <input id="nombre" type="text" name="nombre" class="form-control" placeholder="Ej. Ana López" required>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Correo electrónico</label>
-                <input type="email" name="mail" class="form-control" placeholder="usuario@correo.com" required>
+                <label for="mail" class="form-label">Correo electrónico</label>
+                <input id="mail" type="email" name="mail" class="form-control" placeholder="usuario@correo.com"
+                    required>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Contraseña</label>
-                <input type="password" name="contrasena" class="form-control" placeholder="••••••••" required>
+                <label for="contrasena" class="form-label">Contraseña</label>
+                <input id="contrasena" type="password" name="contrasena" class="form-control" placeholder="••••••••"
+                    required>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Rol</label>
-                <select name="rol" class="form-select" required>
-                    <option value="">Selecciona un rol…</option>
-                    <option>Gerencia de Control de Calidad</option>
-                    <option>Gerencia de laboratorio</option>
-                    <option>Gerencia de Aseguramiento de Calidad</option>
-                    <option>Gerente de Plantas</option>
-                    <option>Director de Operaciones</option>
-                </select>
-            </div>
-
-            <!-- Campos extra -->
-            <div class="col-md-6">
-                <label class="form-label">RFC</label>
-                <input type="text" name="rfc" class="form-control" placeholder="RFC123456ABC" required>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Domicilio de entrega</label>
-                <input type="text" name="domicilio" class="form-control" placeholder="Calle 123, Ciudad" required>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Nombre de contacto</label>
-                <input type="text" name="nombre_contacto" class="form-control" placeholder="Juan Pérez" required>
-            </div>
-
-            <!-- ¿Requiere certificado? -->
-            <div class="col-md-4">
-                <label class="form-label">¿Requiere certificado?</label>
-                <select id="requiresCert" name="requiere_certificado" class="form-select" required>
-                    <option value="0">No</option>
-                    <option value="1">Sí</option>
+                <label for="rol" class="form-label">Rol</label>
+                <select id="rol" name="rol" class="form-select" required>
+                    <option value="" disabled selected>Selecciona un rol…</option>
+                    <option value="Gerencia de Control de Calidad">Gerencia de Control de Calidad</option>
+                    <option value="Gerencia de laboratorio">Gerencia de laboratorio</option>
+                    <option value="Gerencia de Aseguramiento de Calidad">Gerencia de Aseguramiento de Calidad</option>
+                    <option value="Gerente de Plantas">Gerente de Plantas</option>
+                    <option value="Director de Operaciones">Director de Operaciones</option>
                 </select>
             </div>
         </div>
 
-        <!-- Elegir internacional o particular -->
-        <div id="paramsToggle" class="mt-4 d-none">
-            <label class="form-label">Valores de referencia:</label>
-            <select id="useCustomParams" name="use_custom_params" class="form-select">
-                <option value="0">Internacionales (default)</option>
-                <option value="1">Particulares</option>
-            </select>
-        </div>
-
-        <!-- Parámetros particulares -->
-        <div id="customParams" class="mt-4 p-3 border rounded d-none">
-            <h5 class="mb-3">Parámetros de equipos (inf / sup)</h5>
-
-            <!-- Alveógrafo -->
-            <h6>Alveógrafo</h6>
-            <div class="row g-3 mb-3">
-                {% for p in ['W','P','L','relacion_P_L'] %}
-                <div class="col-md-3">
-                    <label class="form-label">{{ p }} (inf)</label>
-                    <input type="number" step="any" name="alveo_{{p}}_inf" class="form-control" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">{{ p }} (sup)</label>
-                    <input type="number" step="any" name="alveo_{{p}}_sup" class="form-control" required>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- Farinógrafo -->
-            <h6>Farinógrafo</h6>
-            <div class="row g-3">
-                {% for p in ['absorcion_de_agua','tiempo_de_desarrollo','estabilidad','indice_de_tolerancia'] %}
-                <div class="col-md-3">
-                    <label class="form-label">{{ p.replace('_',' ').title() }} (inf)</label>
-                    <input type="number" step="any" name="fari_{{p}}_inf" class="form-control" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">{{ p.replace('_',' ').title() }} (sup)</label>
-                    <input type="number" step="any" name="fari_{{p}}_sup" class="form-control" required>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Botones -->
         <div class="mt-4 text-end">
             <a href="{{ url_for('list_users_route') }}" class="btn btn-secondary me-2">Cancelar</a>
             <button type="submit" class="btn btn-success">Dar de alta usuario</button>
         </div>
     </form>
 </div>
-
-<script>
-    const req = document.getElementById('requiresCert'),
-        tog = document.getElementById('paramsToggle'),
-        use = document.getElementById('useCustomParams'),
-        sec = document.getElementById('customParams');
-
-    req.addEventListener('change', () => {
-        const show = req.value === '1';
-        tog.classList.toggle('d-none', !show);
-        if (!show) sec.classList.add('d-none');
-    });
-    use.addEventListener('change', () => {
-        sec.classList.toggle('d-none', use.value !== '1');
-    });
-</script>
 {% endblock %}

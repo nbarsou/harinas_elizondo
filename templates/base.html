@@ -33,7 +33,14 @@
             <div class="collapse navbar-collapse" id="navMenu">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/clients">Clientes</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="clientsDd" role="button"
+                            data-bs-toggle="dropdown">Clientes</a>
+                        <ul class="dropdown-menu" aria-labelledby="clientsDd">
+                            <li><a class="dropdown-item" href="/clients/create">Dar de alta cliente</a></li>
+                            <li><a class="dropdown-item" href="/clients">Ver clientes</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="inspectionsDropdown" role="button" +
                             data-bs-toggle="dropdown">Inspecciones</a>
