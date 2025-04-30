@@ -7,6 +7,7 @@ Admite operaciones CRUD, recuperación de todos los IDs de inspecciones y filtra
 
 from db import db_connection
 import json
+import sqlite3
 
 
 def create_inspection(numero_lote, fecha, id_equipo, secuencia, tipo_inspeccion, parametros_analizados, id_laboratorista):
@@ -134,7 +135,20 @@ def delete_inspection(id_inspeccion: int) -> int:
     return affected_rows
 
 
-def list_inspections() -> list:
+def list_inspections():
+    with db_connection() as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT i.id_inspeccion, i.numero_lote, i.fecha, i.id_equipo,
+                   i.secuencia, i.parametros_analizados, i.tipo_inspeccion,
+                   i.id_laboratorista,
+                   e.tipo || ' - ' || e.marca || ' ' || e.modelo AS equipo_nombre
+            FROM INSPECCION i
+            LEFT JOIN EQUIPO_LABORATORIO e ON i.id_equipo = e.id_equipo
+            ORDER BY i.id_inspeccion ASC
+        """)
+        return cursor.fetchall()
     """
     Obtiene la lista de todas las inspecciones en la base de datos.
 

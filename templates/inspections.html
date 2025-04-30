@@ -29,9 +29,95 @@
                     <td>{{ ins.fecha }}</td>
                     <td>{{ ins.equipo_nombre }}</td>
                     <td class="text-center">
-                        <!-- Editar / Eliminar -->
+                        <button class="btn btn-sm btn-secondary" data-bs-toggle="modal"
+                            data-bs-target="#editModal{{ ins.id_inspeccion }}">Editar</button>
+                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                            data-bs-target="#deleteModal{{ ins.id_inspeccion }}">Borrar</button>
+                        <button class="btn btn-sm btn-secondary" data-bs-toggle="modal"
+                            data-bs-target="#viewModal{{ ins.id_inspeccion }}">Ver</button>
                     </td>
                 </tr>
+                <!-- Modal Ver -->
+                <div class="modal fade" id="viewModal{{ ins.id_inspeccion }}" tabindex="-1"
+                    aria-labelledby="viewModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Detalles de Inspección #{{ ins.id_inspeccion }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>Lote:</strong> {{ ins.numero_lote }}</p>
+                                <p><strong>Secuencia:</strong> {{ ins.secuencia }}</p>
+                                <p><strong>Tipo:</strong> {{ ins.tipo_inspeccion }}</p>
+                                <p><strong>Fecha:</strong> {{ ins.fecha }}</p>
+                                <p><strong>Equipo:</strong> {{ ins.equipo_nombre }}</p>
+                                <p><strong>ID Laboratorista:</strong> {{ ins.id_laboratorista }}</p>
+                                <p><strong>Parámetros:</strong> {{ ins.parametros_analizados }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal Editar -->
+                <div class="modal fade" id="editModal{{ ins.id_inspeccion }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <form method="POST" action="{{ url_for('edit_inspection', id=ins.id_inspeccion) }}">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Editar Inspección #{{ ins.id_inspeccion }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Numero de lote</label>
+                                            <input type="text" name="numero_lote" value="{{ ins.numero_lote }}"
+                                                class="form-control mb-2" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Secuencia</label>
+                                            <input type="text" name="secuencia" value="{{ ins.secuencia }}"
+                                                class="form-control mb-2" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Tipo de inspeccion</label>
+                                            <input type="text" name="tipo_inspeccion" value="{{ ins.tipo_inspeccion }}"
+                                                class="form-control mb-2" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Fecha</label>
+                                            <input type="date" name="fecha" value="{{ ins.fecha }}"
+                                                class="form-control mb-2" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-success">Guardar cambios</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!-- Modal Eliminar -->
+                <div class="modal fade" id="deleteModal{{ ins.id_inspeccion }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <form method="POST" action="{{ url_for('delete_inspection_route', id=ins.id_inspeccion) }}">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    ¿Estás seguro que deseas eliminar la inspección #{{ ins.id_inspeccion }}?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 {% else %}
                 <tr>
                     <td colspan="7" class="text-center py-4">No hay inspecciones registradas.</td>
