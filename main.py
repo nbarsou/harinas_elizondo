@@ -17,7 +17,7 @@ from db import init_db
 import os, json
 from services.user_service import create_user, list_users, authenticate_user
 from services.client_service import create_client, list_clients, get_client, update_client, deactivate_client 
-from services.inspection_service import create_inspection, list_inspections
+from services.inspection_service import create_inspection, list_inspections,update_inspection, delete_inspection
 from services.equipment_service import create_equipment, list_equipment
 
 
@@ -103,6 +103,26 @@ def list_inspections_route():
     inspections = list_inspections()
     return render_template('inspections.html', inspections=inspections)
 
+@app.route('/inspections/<int:id>/edit', methods=['POST'])
+def edit_inspection(id):
+    update_inspection(
+        id_inspeccion=id,
+        numero_lote=request.form['numero_lote'],
+        fecha=request.form['fecha'],
+        id_equipo=None,
+        secuencia=request.form.get('secuencia'),
+        parametros_analizados=None,
+        tipo_inspeccion=request.form['tipo_inspeccion'],
+        id_laboratorista=session['user_id']
+    )
+    flash("Inspección actualizada correctamente.", "success")
+    return redirect(url_for('list_inspections_route'))
+
+@app.route('/inspections/<int:id>/delete', methods=['POST'])
+def delete_inspection_route(id):
+    delete_inspection(id)
+    flash("Inspección eliminada correctamente.", "success")
+    return redirect(url_for('list_inspections_route'))
 
 # ---- CERTIFICATION ----
 @app.route("/certification")
