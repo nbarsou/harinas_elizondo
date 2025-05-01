@@ -73,5 +73,5 @@ def send_certificate(correo_cliente: str, nombre_archivo: str) -> None:
 
 
 # Ejemplo de uso (descomenta para probar):
-if __name__ == "__main__":
-    send_certificate("brunoravelo2525@gmail.com", "archivo.pdf")
+#if __name__ == "__main__":
+    #send_certificate("brunoravelo2525@gmail.com", "archivo.pdf")
