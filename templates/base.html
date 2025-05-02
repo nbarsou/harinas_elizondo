@@ -34,15 +34,7 @@
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{url_for('list_clients_route')}}">Clientes</a></li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="inspectionsDropdown" role="button" +
-                            data-bs-toggle="dropdown">Inspecciones</a>
-                        <ul class="dropdown-menu" aria-labelledby="inspectionsDropdown">
-                            <li><a class="dropdown-item" href="/inspections/create">Registrar inspección</a></li>
-                            <li><a class="dropdown-item" href="/inspections">Ver inspecciones</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item"><a class="nav-link" href="/sales">Ventas</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{url_for('list_inspections_route')}}">Inspecciones</a></li>
                     <li class="nav-item"><a class="nav-link" href="/certifications">Certificados</a></li>
                     <li class="nav-item"><a class="nav-link" href="/reports">Reportes</a></li>
                     <li class="nav-item dropdown">

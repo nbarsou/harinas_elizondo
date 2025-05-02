@@ -2,7 +2,22 @@
 {% block title %}Inspecciones Registradas{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Inspecciones Registradas</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Inspecciones Registradas</h2>
+    <div class="dropdown">
+        <button class="btn btn-primary dropdown-toggle" type="button" id="actionMenu" data-bs-toggle="dropdown" aria-expanded="false">
+            Acciones
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="actionMenu">
+            <li><a class="dropdown-item" href="{{ url_for('register_inspection') }}">Crear Inspección</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><button class="dropdown-item" id="btn-edit" disabled>Editar</button></li>
+            <li><button class="dropdown-item" id="btn-view" disabled>Ver</button></li>
+            <li><button class="dropdown-item" id="btn-delete" disabled>Eliminar</button></li>
+        </ul>
+    </div>
+</div>
+{% if inspections%}
 <div class="card shadow-sm">
     <div class="table-responsive">
         <table class="table table-hover mb-0">
@@ -20,7 +35,7 @@
             </thead>
             <tbody>
                 {% for ins in inspections %}
-                <tr>
+                <tr class="selectable-row" data-id="{{ ins.id_inspeccion }}" data-inspeccion='{{ ins | tojson | safe }}'>
                     <td>{{ ins.id_inspeccion }}</td>
                     <td>{{ ins.id_laboratorista }}</td>
                     <td>{{ ins.numero_lote }}</td>
@@ -37,94 +52,155 @@
                             data-bs-target="#viewModal{{ ins.id_inspeccion }}">Ver</button>
                     </td>
                 </tr>
-                <!-- Modal Ver -->
-                <div class="modal fade" id="viewModal{{ ins.id_inspeccion }}" tabindex="-1"
-                    aria-labelledby="viewModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Detalles de Inspección #{{ ins.id_inspeccion }}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p><strong>Lote:</strong> {{ ins.numero_lote }}</p>
-                                <p><strong>Secuencia:</strong> {{ ins.secuencia }}</p>
-                                <p><strong>Tipo:</strong> {{ ins.tipo_inspeccion }}</p>
-                                <p><strong>Fecha:</strong> {{ ins.fecha }}</p>
-                                <p><strong>Equipo:</strong> {{ ins.equipo_nombre }}</p>
-                                <p><strong>ID Laboratorista:</strong> {{ ins.id_laboratorista }}</p>
-                                <p><strong>Parámetros:</strong> {{ ins.parametros_analizados }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Modal Editar -->
-                <div class="modal fade" id="editModal{{ ins.id_inspeccion }}" tabindex="-1">
-                    <div class="modal-dialog">
-                        <form method="POST" action="{{ url_for('edit_inspection', id=ins.id_inspeccion) }}">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Editar Inspección #{{ ins.id_inspeccion }}</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Numero de lote</label>
-                                            <input type="text" name="numero_lote" value="{{ ins.numero_lote }}"
-                                                class="form-control mb-2" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Secuencia</label>
-                                            <input type="text" name="secuencia" value="{{ ins.secuencia }}"
-                                                class="form-control mb-2" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Tipo de inspeccion</label>
-                                            <input type="text" name="tipo_inspeccion" value="{{ ins.tipo_inspeccion }}"
-                                                class="form-control mb-2" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Fecha</label>
-                                            <input type="date" name="fecha" value="{{ ins.fecha }}"
-                                                class="form-control mb-2" required>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="submit" class="btn btn-success">Guardar cambios</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                <!-- Modal Eliminar -->
-                <div class="modal fade" id="deleteModal{{ ins.id_inspeccion }}" tabindex="-1">
-                    <div class="modal-dialog">
-                        <form method="POST" action="{{ url_for('delete_inspection_route', id=ins.id_inspeccion) }}">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Confirmar Eliminación</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    ¿Estás seguro que deseas eliminar la inspección #{{ ins.id_inspeccion }}?
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                {% else %}
-                <tr>
-                    <td colspan="7" class="text-center py-4">No hay inspecciones registradas.</td>
-                </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+{% else %}
+ <div class="alert alert-info">No hay inspecciones registradas todavía.</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let selectedId = null;
+    let selectedData = null;
+
+    const rows = document.querySelectorAll('.selectable-row');
+    const editBtn = document.getElementById('btn-edit');
+    const viewBtn = document.getElementById('btn-view');
+    const deleteBtn = document.getElementById('btn-delete');
+
+    rows.forEach(row => {
+        row.addEventListener('click', () => {
+            rows.forEach(r => r.classList.remove('table-primary'));
+            row.classList.add('table-primary');
+            selectedId = row.dataset.id;
+            selectedData = JSON.parse(row.dataset.inspeccion);
+
+            [editBtn, viewBtn, deleteBtn].forEach(btn => btn.disabled = false);
+        });
+    });
+
+    viewBtn.onclick = () => {
+        const modal = new bootstrap.Modal(document.getElementById('viewModal'));
+        document.getElementById('view-id').textContent = selectedData.id_inspeccion;
+        document.getElementById('view-lote').textContent = selectedData.numero_lote;
+        document.getElementById('view-secuencia').textContent = selectedData.secuencia;
+        document.getElementById('view-tipo').textContent = selectedData.tipo_inspeccion;
+        document.getElementById('view-fecha').textContent = selectedData.fecha;
+        document.getElementById('view-equipo').textContent = selectedData.equipo_nombre;
+        document.getElementById('view-laboratorista').textContent = selectedData.id_laboratorista;
+        document.getElementById('view-parametros').textContent = JSON.stringify(selectedData.parametros_analizados, null, 2);
+        modal.show();
+    };
+
+    editBtn.onclick = () => {
+        const modal = new bootstrap.Modal(document.getElementById('editModal'));
+        const form = document.getElementById('editForm');
+        form.action = `/inspections/${selectedId}/edit`;
+
+        form.querySelector('[name="numero_lote"]').value = selectedData.numero_lote || '';
+        form.querySelector('[name="secuencia"]').value = selectedData.secuencia || '';
+        form.querySelector('[name="tipo_inspeccion"]').value = selectedData.tipo_inspeccion || '';
+        form.querySelector('[name="fecha"]').value = selectedData.fecha || '';
+
+        document.getElementById('editModalTitle').textContent = `Editar Inspección #${selectedId}`;
+        modal.show();
+    };
+
+    deleteBtn.onclick = () => {
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        const form = document.getElementById('deleteForm');
+        form.action = `/inspections/${selectedId}/delete`;
+
+        document.getElementById('deleteModalText').textContent =
+            `¿Estás seguro que deseas eliminar la inspección #${selectedId}?`;
+
+        modal.show();
+    };
+});
+</script>
+
+
+<!-- Modal Ver -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Detalles de Inspección</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>ID:</strong> <span id="view-id"></span></p>
+        <p><strong>Lote:</strong> <span id="view-lote"></span></p>
+        <p><strong>Secuencia:</strong> <span id="view-secuencia"></span></p>
+        <p><strong>Tipo:</strong> <span id="view-tipo"></span></p>
+        <p><strong>Fecha:</strong> <span id="view-fecha"></span></p>
+        <p><strong>Equipo:</strong> <span id="view-equipo"></span></p>
+        <p><strong>ID Laboratorista:</strong> <span id="view-laboratorista"></span></p>
+        <p><strong>Parámetros:</strong></p>
+        <pre id="view-parametros" class="bg-light p-2 rounded"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="editForm" method="POST">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalTitle">Editar Inspección</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Numero de lote</label>
+              <input type="text" name="numero_lote" class="form-control mb-2" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Secuencia</label>
+              <input type="text" name="secuencia" class="form-control mb-2" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tipo de inspección</label>
+              <input type="text" name="tipo_inspeccion" class="form-control mb-2" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fecha</label>
+              <input type="date" name="fecha" class="form-control mb-2" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Guardar cambios</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="deleteForm" method="POST">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirmar Eliminación</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p id="deleteModalText" class="mb-0"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
 {% endblock %}
