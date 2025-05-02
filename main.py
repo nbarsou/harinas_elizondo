@@ -17,8 +17,12 @@ from db import init_db
 import os, json
 from services.user_service import create_user, list_users, authenticate_user
 from services.client_service import create_client, list_clients, get_client, update_client, deactivate_client 
-from services.inspection_service import create_inspection, list_inspections,update_inspection, delete_inspection
+from services.inspection_service import create_inspection, list_inspections, update_inspection, delete_inspection, get_all_inspections, get_inspection
 from services.equipment_service import create_equipment, list_equipment
+from services.certificate_service import list_certificates, delete_certificate, create_certificate
+from xhtml2pdf import pisa # falta en requirements
+from io import BytesIO
+from services.mail_service import send_certificate
 
 
 
@@ -124,14 +128,92 @@ def delete_inspection_route(id):
     flash("Inspección eliminada correctamente.", "success")
     return redirect(url_for('list_inspections_route'))
 
+@app.route("/certificates/delete/<int:id>", methods=["POST"])
+def delete_certificate_route(id):
+    from services.certificate_service import delete_certificate
+    delete_certificate(id)
+    return redirect(url_for('certifications'))  # Usa 'certifications' como me dijiste
+
+
+@app.route('/certifications/create', methods=['POST'])
+def create_certificate_route():
+
+    # 1. Leer datos del formulario
+    form = request.form
+    try:
+        id_inspeccion = int(form['id_inspeccion'])
+    except (KeyError, ValueError):
+        flash('Inspección no válida', 'danger')
+        return redirect(url_for('certifications'))
+
+    inspeccion = get_inspection(id_inspeccion)
+    if not inspeccion:
+        flash('Inspección no encontrada', 'danger')
+        return redirect(url_for('certifications'))
+
+    # 2. Insertar en la base de datos
+    try:
+        cert_id = create_certificate(
+            id_cliente=int(form.get('id_cliente', 0)),
+            id_inspeccion=id_inspeccion,
+            secuencia_inspeccion=form.get('secuencia_inspeccion', ''),
+            orden_compra=form.get('orden_compra', ''),
+            cantidad_solicitada=float(form.get('cantidad_solicitada') or 0),
+            cantidad_entregada=float(form.get('cantidad_entregada') or 0),
+            numero_factura=form.get('numero_factura', ''),
+            fecha_envio=form.get('fecha_envio', ''),
+            fecha_caducidad=form.get('fecha_caducidad', ''),
+            resultados_analisis=inspeccion['parametros_analizados'],
+            compara_referencias=form.get('compara_referencias', ''),
+            desviaciones=form.get('desviaciones', ''),
+            destinatario_correo=form.get('destinatario_correo', '')
+        )
+    except Exception as e:
+        flash(f'Error al crear certificado: {e}', 'danger')
+        return redirect(url_for('certifications'))
+
+    # 3. Preparar datos para el PDF
+    cert = {
+        'id_certificado': cert_id,
+        'id_cliente': int(form.get('id_cliente', 0)),
+        'id_inspeccion': id_inspeccion,
+        'secuencia_inspeccion': form.get('secuencia_inspeccion', ''),
+        'orden_compra': form.get('orden_compra', ''),
+        'cantidad_solicitada': form.get('cantidad_solicitada', ''),
+        'cantidad_entregada': form.get('cantidad_entregada', ''),
+        'numero_factura': form.get('numero_factura', ''),
+        'fecha_envio': form.get('fecha_envio', ''),
+        'fecha_caducidad': form.get('fecha_caducidad', ''),
+        'resultados_analisis': inspeccion['parametros_analizados'],
+        'compara_referencias': form.get('compara_referencias', ''),
+        'desviaciones': form.get('desviaciones', ''),
+        'destinatario_correo': form.get('destinatario_correo', '')
+    }
+
+    # 4. Generar PDF desde template
+    html = render_template('certificado_pdf.html', cert=cert)
+    pdf_dir = os.path.join(os.path.dirname(__file__), 'services', 'certificados')
+    os.makedirs(pdf_dir, exist_ok=True)
+    pdf_filename = f'certificado_{cert_id}.pdf'
+    pdf_path = os.path.join(pdf_dir, pdf_filename)
+    with open(pdf_path, 'wb') as pdf_file:
+        pisa.CreatePDF(BytesIO(html.encode('utf-8')), dest=pdf_file)
+
+    # 5. Enviar correo con el PDF
+    try:
+        send_certificate(cert['destinatario_correo'], pdf_filename)
+        flash(f'Certificado #{cert_id} emitido y enviado por correo', 'success')
+    except Exception as e:
+        flash(f'Certificado #{cert_id} emitido, pero fallo al enviar correo: {e}', 'warning')
+
+    return redirect(url_for('certifications'))
+
 # ---- CERTIFICATION ----
-@app.route("/certification")
+@app.route("/certifications", endpoint="certifications")
 def certification():
-    """
-    Vista de certificación.
-    Permite gestionar la emisión de certificados de calidad basados en inspecciones.
-    """
-    return render_template("certification.html")
+    certificados = list_certificates()
+    inspecciones = get_all_inspections()
+    return render_template("certifications.html", certificados=certificados, inspecciones=inspecciones)
 
 
 # ---- EQUIPMENT ----

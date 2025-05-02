@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
+        h1 { text-align: center; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #444; padding: 5px; text-align: left; }
+    </style>
+</head>
+<body>
+    <h1>Certificado de Calidad</h1>
+
+    <p><strong>ID Certificado:</strong> {{ cert.id_certificado }}</p>
+    <p><strong>ID Cliente:</strong> {{ cert.id_cliente }}</p>
+    <p><strong>ID Inspección:</strong> {{ cert.id_inspeccion }}</p>
+    <p><strong>Secuencia:</strong> {{ cert.secuencia_inspeccion }}</p>
+    <p><strong>Orden de Compra:</strong> {{ cert.orden_compra }}</p>
+    <p><strong>Fecha de Envío:</strong> {{ cert.fecha_envio }}</p>
+    <p><strong>Fecha de Caducidad:</strong> {{ cert.fecha_caducidad }}</p>
+
+    <h3>Parámetros Analizados</h3>
+    <pre>{{ cert.resultados_analisis }}</pre>
+
+    <h3>Comparación con Referencias</h3>
+    <pre>{{ cert.compara_referencias }}</pre>
+
+    <h3>Desviaciones</h3>
+    <pre>{{ cert.desviaciones }}</pre>
+
+    <p><em>Generado automáticamente por el Sistema de Laboratorio Harinero.</em></p>
+</body>
+</html>
