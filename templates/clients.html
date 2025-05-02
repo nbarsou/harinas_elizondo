@@ -2,7 +2,22 @@
 {% block title %}Clientes Registrados{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Clientes Registrados</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Clientes Registrados</h2>
+    <div class="dropdown">
+        <button class="btn btn-primary dropdown-toggle" type="button" id="actionMenu" data-bs-toggle="dropdown" aria-expanded="false">
+            Acciones
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="actionMenu">
+            <li><a class="dropdown-item" href="{{ url_for('register_client') }}">Dar de Alta Cliente</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><button class="dropdown-item" id="btn-edit" disabled>Editar</button></li>
+            <li><button class="dropdown-item" id="btn-view" disabled>Ver</button></li>
+            <li><button class="dropdown-item" id="btn-deactivate" disabled>Dar de Baja</button></li>
+        </ul>
+    </div>
+</div>
+{% if clients %}
 <div class="card shadow-sm">
     <div class="table-responsive">
         <table class="table table-hover mb-0">
@@ -15,12 +30,11 @@
                     <th>Email</th>
                     <th>Activo</th>
                     <th>Certif.</th>
-                    <th class="text-center">Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for c in clients %}
-                <tr>
+                <tr data-id="{{ c.id_cliente }}" class="selectable-row" data-cliente='{{ c | tojson | safe }}'>
                     <td>{{ c.id_cliente }}</td>
                     <td>{{ c.nombre }}</td>
                     <td>{{ c.rfc or '-' }}</td>
@@ -28,180 +42,233 @@
                     <td>{{ c.correo_contacto or '-' }}</td>
                     <td>{{ 'Sí' if c.activo else 'No' }}</td>
                     <td>{{ 'Sí' if c.requiere_certificado else 'No' }}</td>
-                    <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-secondary me-1" data-bs-toggle="modal"
-                            data-bs-target="#editModal{{ c.id_cliente }}">Editar</button>
-                        <button type="button" class="btn btn-sm btn-danger me-1" data-bs-toggle="modal"
-                            data-bs-target="#deactivateModal{{ c.id_cliente }}">Dar de Baja</button>
-                        <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal"
-                            data-bs-target="#viewModal{{ c.id_cliente }}">Ver</button>
-                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-    <div class="p-4 text-end">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createClientModal">Dar de
-            Alta Cliente</button>
-    </div>
 </div>
+{% else %}
+ <div class="alert alert-info">No hay equipos registrados todavía.</div>
+{% endif %}
 
-<!-- Modales para cada cliente -->
-{% for c in clients %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let selectedId = null;
+        const rows = document.querySelectorAll('.selectable-row');
+        const editBtn = document.getElementById('btn-edit');
+        const viewBtn = document.getElementById('btn-view');
+        const deactivateBtn = document.getElementById('btn-deactivate');
+
+        rows.forEach(row => {
+            row.addEventListener('click', () => {
+                // Quitar selección anterior
+                rows.forEach(r => r.classList.remove('table-primary'));
+                row.classList.add('table-primary');
+
+                // Guardar el ID y habilitar botones
+                selectedId = row.dataset.id;
+                [editBtn, viewBtn, deactivateBtn].forEach(btn => btn.disabled = false);
+            });
+        });
+
+        // Abrir los modales correspondientes al ID seleccionado
+        editBtn.onclick = () => {
+          const row = document.querySelector(`tr[data-id="${selectedId}"]`);
+          const cliente = JSON.parse(row.dataset.cliente);
+
+          const modal = document.getElementById('editModal');
+          const form = modal.querySelector('#editForm');
+
+          // Actualizar action dinámico
+          form.action = `/clients/update/${cliente.id_cliente}`;
+
+          // Rellenar inputs
+          form.querySelector('input[name="nombre"]').value = cliente.nombre || '';
+          form.querySelector('input[name="rfc"]').value = cliente.rfc || '';
+          form.querySelector('input[name="nombre_contacto"]').value = cliente.nombre_contacto || '';
+          form.querySelector('input[name="correo_contacto"]').value = cliente.correo_contacto || '';
+          form.querySelector('input[name="activo"]').value = cliente.activo ? 1 : 0;
+
+          // Selección de certificado
+          const selectCert = form.querySelector('select[name="requiere_certificado"]');
+          if (selectCert) selectCert.value = cliente.requiere_certificado ? '1' : '0';
+
+          // Actualizar título
+          modal.querySelector('.modal-title').textContent = `Editar Cliente - ${cliente.nombre}`;
+
+          // Mostrar modal
+          new bootstrap.Modal(modal).show();
+        };
+
+
+        viewBtn.onclick = () => {
+            const row = document.querySelector(`tr[data-id="${selectedId}"]`);
+            const cliente = JSON.parse(row.dataset.cliente);
+
+            const modal = document.getElementById(`viewModal`);
+            modal.querySelector('.modal-title').textContent = `Información Cliente - ${cliente.nombre}`;
+
+            document.getElementById('view-id').textContent = cliente.id_cliente || '-';
+            document.getElementById('view-nombre').textContent = cliente.nombre || '-';
+            document.getElementById('view-rfc').textContent = cliente.rfc || '-';
+            document.getElementById('view-contacto').textContent = cliente.nombre_contacto || '-';
+            document.getElementById('view-email').textContent = cliente.correo_contacto || '-';
+            document.getElementById('view-activo').textContent = cliente.activo ? 'Sí' : 'No';
+            document.getElementById('view-certificado').textContent =
+                !cliente.requiere_certificado ? 'No requiere certificado'
+                : cliente.configuracion_json?.includes('"alveografo"') ? 'Parámetros internacionales (rangos estándar)'
+                : 'Parámetros personalizados';
+
+            document.getElementById('view-baja').textContent = cliente.motivo_baja || '-';
+
+            new bootstrap.Modal(modal).show();
+        };
+
+        deactivateBtn.onclick = () => {
+            const row = document.querySelector(`tr[data-id="${selectedId}"]`);
+            const cliente = JSON.parse(row.dataset.cliente);
+
+            const modal = document.getElementById('deactivateModal');
+            const form = document.getElementById('deactivateForm');
+            const textarea = document.getElementById('motivo_baja');
+            const title = modal.querySelector('.modal-title');
+
+            // Limpia campo
+            textarea.value = '';
+
+            // Actualiza título
+            title.textContent = `Causa de baja - ${cliente.nombre}`;
+
+            // Actualiza ruta del form con el ID correcto
+            form.action = `/clients/deactivate/${cliente.id_cliente}`;
+
+            // Muestra modal
+            new bootstrap.Modal(modal).show();
+        };
+    });
+</script>
 
 <!-- Edit Modal -->
-<div class="modal fade" id="editModal{{ c.id_cliente }}" tabindex="-1" aria-labelledby="editLabel{{ c.id_cliente }}"
-    aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form action="{{ url_for('update_client_route', id=c.id_cliente) }}" method="POST">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editLabel{{ c.id_cliente }}">Editar Cliente - {{ c.nombre }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Nombre del Cliente</label>
-                            <input type="text" name="nombre" class="form-control" value="{{ c.nombre }}" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">RFC</label>
-                            <input type="text" name="rfc" class="form-control" value="{{ c.rfc }}" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Nombre de Contacto</label>
-                            <input type="text" name="nombre_contacto" class="form-control"
-                                value="{{ c.nombre_contacto }}" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Correo de Contacto</label>
-                            <input type="email" name="correo_contacto" class="form-control"
-                                value="{{ c.correo_contacto }}" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Activo</label>
-                            <input type="hidden" name="activo" value="{{ c.activo|int }}">
-                            <select class="form-select" disabled>
-                                <option value="1" {% if c.activo %} selected{% endif %}>Sí</option>
-                                <option value="0" {% if not c.activo %} selected{% endif %}>No</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">¿Requiere certificado?</label>
-                            <select name="requiere_certificado" class="form-select">
-                                <option value="0" {% if not c.requiere_certificado %} selected{% endif %}>No</option>
-                                <option value="1" {% if c.requiere_certificado %} selected{% endif %}>Sí</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                </div>
-            </form>
+<!-- Edit Modal ÚNICO -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="editForm" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editLabel">Editar Cliente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nombre del Cliente</label>
+              <input type="text" name="nombre" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">RFC</label>
+              <input type="text" name="rfc" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nombre de Contacto</label>
+              <input type="text" name="nombre_contacto" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Correo de Contacto</label>
+              <input type="email" name="correo_contacto" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Activo</label>
+              <input type="hidden" name="activo">
+              <select class="form-select" disabled>
+                <option value="1">Sí</option>
+                <option value="0">No</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">¿Requiere certificado?</label>
+              <select name="requiere_certificado" class="form-select">
+                <option value="0">No</option>
+                <option value="1">Sí</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 
+
 <!-- Deactivate Modal -->
-<div class="modal fade" id="deactivateModal{{ c.id_cliente }}" tabindex="-1"
-    aria-labelledby="deactivateLabel{{ c.id_cliente }}" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form action="{{ url_for('deactivate_client_route', id=c.id_cliente) }}" method="POST">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deactivateLabel{{ c.id_cliente }}">Causa de baja - {{ c.nombre }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="motivo{{ c.id_cliente }}" class="form-label">Motivo de baja</label>
-                        <textarea id="motivo{{ c.id_cliente }}" name="motivo_baja" class="form-control" rows="3"
-                            required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Confirmar Baja</button>
-                </div>
-            </form>
+<div class="modal fade" id="deactivateModal" tabindex="-1" aria-labelledby="deactivateLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="deactivateForm" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deactivateLabel">Causa de baja</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="motivo_baja" class="form-label">Motivo de baja</label>
+            <textarea id="motivo_baja" name="motivo_baja" class="form-control" rows="3" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Confirmar Baja</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 
 <!-- View Modal -->
-<div class="modal fade" id="viewModal{{ c.id_cliente }}" tabindex="-1" aria-labelledby="viewLabel{{ c.id_cliente }}"
-    aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="viewLabel{{ c.id_cliente }}">Información Cliente - {{ c.nombre }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <dl class="row">
-                    <dt class="col-sm-3">ID</dt>
-                    <dd class="col-sm-9">{{ c.id_cliente }}</dd>
-                    <dt class="col-sm-3">Nombre</dt>
-                    <dd class="col-sm-9">{{ c.nombre }}</dd>
-                    <dt class="col-sm-3">RFC</dt>
-                    <dd class="col-sm-9">{{ c.rfc or '-' }}</dd>
-                    <dt class="col-sm-3">Contacto</dt>
-                    <dd class="col-sm-9">{{ c.nombre_contacto or '-' }}</dd>
-                    <dt class="col-sm-3">Email</dt>
-                    <dd class="col-sm-9">{{ c.correo_contacto or '-' }}</dd>
-                    <dt class="col-sm-3">Activo</dt>
-                    <dd class="col-sm-9">{{ 'Sí' if c.activo else 'No' }}</dd>
-                    <dt class="col-sm-3">Certificado</dt>
-                    <dd class="col-sm-9">
-                        {% if not c.requiere_certificado %}
-                        No requiere certificado
-                        {% elif '"alveografo"' in c.configuracion_json %}
-                        Parámetros internacionales (rangos estándar)
-                        {% else %}
-                        Parámetros personalizados
-                        {% endif %}
-                    </dd>
-                    {% if c.motivo_baja %}<dt class="col-sm-3">Motivo Baja</dt>
-                    <dd class="col-sm-9">{{ c.motivo_baja }}</dd>{% endif %}
-                </dl>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- View Modal único -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewLabel">Información Cliente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <dl class="row">
+          <dt class="col-sm-3">ID</dt>
+          <dd class="col-sm-9" id="view-id"></dd>
 
-{% endfor %}
+          <dt class="col-sm-3">Nombre</dt>
+          <dd class="col-sm-9" id="view-nombre"></dd>
 
-<!-- Modal para crear cliente en pop-up -->
-<div class="modal fade" id="createClientModal" tabindex="-1" aria-labelledby="createClientLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="createClientLabel">Dar de Alta Cliente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Incluye el formulario inline para no romper base.html -->
-                <h2 class="mb-4">Dar de Alta Cliente</h2>
-                <div class="card shadow-sm p-4">
-                    <form action="{{ url_for('register_client') }}" method="POST">
-                        <!-- (Copia aquí exactamente los mismos campos y script de create_client.html) -->
-                        <div class="row g-3">
-                            <!-- ... campos ... -->
-                        </div>
-                        <!-- toggle params -->
-                        <!-- botones -->
-                    </form>
-                </div>
-            </div>
-        </div>
+          <dt class="col-sm-3">RFC</dt>
+          <dd class="col-sm-9" id="view-rfc"></dd>
+
+          <dt class="col-sm-3">Contacto</dt>
+          <dd class="col-sm-9" id="view-contacto"></dd>
+
+          <dt class="col-sm-3">Email</dt>
+          <dd class="col-sm-9" id="view-email"></dd>
+
+          <dt class="col-sm-3">Activo</dt>
+          <dd class="col-sm-9" id="view-activo"></dd>
+
+          <dt class="col-sm-3">Certificado</dt>
+          <dd class="col-sm-9" id="view-certificado"></dd>
+
+          <dt class="col-sm-3">Motivo Baja</dt>
+          <dd class="col-sm-9" id="view-baja"></dd>
+        </dl>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
     </div>
+  </div>
 </div>
 
 {% endblock %}
