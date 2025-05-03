@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
-
 {% block title %}Dar de Alta Cliente{% endblock %}
-
 {% block content %}
 <div class="card shadow-sm p-4">
     <h2 class="mb-4">Dar de Alta Cliente</h2>
@@ -22,10 +20,8 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label">Correo de Contacto</label>
-                <input type="email" name="correo_contacto" class="form-control" placeholder="contacto@cliente.com"
-                    required>
+                <input type="email" name="correo_contacto" class="form-control" placeholder="contacto@cliente.com" required>
             </div>
-
             <!-- Activo -->
             <div class="col-md-4">
                 <label class="form-label">Activo</label>
@@ -34,7 +30,6 @@
                     <option value="0">No</option>
                 </select>
             </div>
-
             <!-- ¿Requiere Certificado? -->
             <div class="col-md-4">
                 <label class="form-label">¿Requiere certificado?</label>
@@ -44,7 +39,6 @@
                 </select>
             </div>
         </div>
-
         <!-- Elección internacional / particular -->
         <div id="paramsToggle" class="mt-4 d-none">
             <label class="form-label">Valores de referencia:</label>
@@ -53,11 +47,9 @@
                 <option value="1">Particulares</option>
             </select>
         </div>
-
         <!-- Parámetros particulares -->
         <div id="customParams" class="mt-4 p-3 border rounded d-none">
             <h5 class="mb-3">Parámetros de equipos (límite inferior / superior)</h5>
-
             <!-- Alveógrafo -->
             <h6>Alveógrafo</h6>
             <div class="row g-3 mb-3">
@@ -65,12 +57,10 @@
                 <div class="col-md-3">
                     <label class="form-label">{{ p }}</label>
                     <input type="number" step="any" name="alveo_{{ p }}_inf" class="form-control" placeholder="inf">
-                    <input type="number" step="any" name="alveo_{{ p }}_sup" class="form-control mt-1"
-                        placeholder="sup">
+                    <input type="number" step="any" name="alveo_{{ p }}_sup" class="form-control mt-1" placeholder="sup">
                 </div>
                 {% endfor %}
             </div>
-
             <!-- Farinógrafo -->
             <h6>Farinógrafo</h6>
             <div class="row g-3">
@@ -83,7 +73,6 @@
                 {% endfor %}
             </div>
         </div>
-
         <!-- Botones -->
         <div class="mt-4 text-end">
             <button type="button" class="btn btn-secondary me-2" onclick="window.location.href='/clients'">Cancelar</button>
@@ -91,13 +80,11 @@
         </div>
     </form>
 </div>
-
 <script>
     const req = document.getElementById('requiresCert'),
         tog = document.getElementById('paramsToggle'),
         use = document.getElementById('useCustomParams'),
         sec = document.getElementById('customParams');
-
     req.addEventListener('change', () => {
         const show = req.value === '1';
         tog.classList.toggle('d-none', !show);

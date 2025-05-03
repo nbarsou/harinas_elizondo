@@ -14,14 +14,15 @@ Define las rutas principales de la aplicación y maneja la carga de vistas para:
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 
 from db import init_db
-import os, json
-from services.user_service import create_user, list_users, authenticate_user
+
+from services.user_service import create_user, list_users, update_user, delete_user
 from services.client_service import (
     create_client,
-    list_clients,
     get_client,
+    list_clients,
     update_client,
     deactivate_client,
+    delete_client,
 )
 from services.inspection_service import (
     create_inspection,
@@ -29,7 +30,13 @@ from services.inspection_service import (
     update_inspection,
     delete_inspection,
 )
-from services.equipment_service import create_equipment, list_equipment
+from services.equipment_service import (
+    create_equipment,
+    list_equipment,
+    update_equipment,
+    deactivate_equipment,
+    delete_equipment,
+)
 
 
 app = Flask(__name__)
@@ -174,6 +181,24 @@ def deactivate_client_route(id):
     return redirect(url_for("list_clients_route"))
 
 
+@app.route("/clientes/delete/<int:client_id>", methods=["POST"])
+def delete_client_route(client_id):
+    try:
+        affected = delete_client(client_id)
+
+        if affected == 1:
+            flash("Cliente eliminado correctamente.", "success")
+        else:
+            flash("No se encontró el cliente a eliminar.", "warning")
+
+    except Exception as e:
+        flash(f"Error al eliminar el cliente: {e}", "danger")
+
+    return redirect(
+        url_for("list_clients_route")
+    )  # Ajusta con tu nombre real de la vista
+
+
 # ---- INSPECTION ----
 @app.route("/inspections/create", methods=["GET", "POST"])
 def register_inspection():
@@ -208,7 +233,6 @@ def register_inspection():
 
 @app.route("/inspections")
 def list_inspections_route():
-
     inspections = list_inspections()
     return render_template("inspections.html", inspections=inspections)
 
@@ -269,7 +293,7 @@ def register_equipment():
                 causa_baja=request.form["causa_baja"],
             )
             flash("Equipo registrado correctamente", "success")
-            return redirect(url_for("equipment"))
+            return redirect(url_for("list_equipment_route"))
         except Exception as e:
             flash(f"Error: {e}", "danger")
     return render_template("create_equipment.html")
@@ -277,9 +301,49 @@ def register_equipment():
 
 # ---- EQUIPMENT: Ver equipos registrados ----
 @app.route("/equipment")
-def equipment():
+def list_equipment_route():
     equipos = list_equipment()
     return render_template("equipment.html", equipos=equipos)
+
+
+@app.route("/equipos/<int:id>/edit", methods=["POST"])
+def edit_equipment(id):
+    update_equipment(
+        id_equipo=id,
+        tipo=request.form["tipo"],
+        clave=request.form.get("clave"),
+        marca=request.form.get("marca"),
+        modelo=request.form.get("modelo"),
+        serie=request.form.get("serie"),
+        descripcion_larga=request.form.get("descripcion_larga"),
+        descripcion_corta=request.form.get("descripcion_corta"),
+        proveedor=request.form.get("proveedor"),
+        fecha_adquisicion=request.form.get("fecha_adquisicion"),
+        garantia=request.form.get("garantia"),
+        vigencia_garantia=request.form.get("vigencia_garantia"),
+        ubicacion=request.form.get("ubicacion"),
+        encargado=int(request.form["encargado"])
+        if request.form.get("encargado")
+        else None,
+        estado=request.form.get("estado"),
+        causa_baja=request.form.get("causa_baja"),
+    )
+    flash("Equipo actualizado correctamente.", "success")
+    return redirect(
+        url_for("list_equipment_route")
+    )  # Reemplaza con el nombre correcto de tu vista
+
+
+@app.route("/equipos/<int:id>/delete", methods=["POST"])
+def delete_equipment_route(id):
+    affected = delete_equipment(id)
+
+    if affected == 1:
+        flash("Equipo eliminado correctamente.", "success")
+    else:
+        flash("No se encontró el equipo a eliminar.", "warning")
+
+    return redirect(url_for("list_equipment_route"))
 
 
 # ---- USERS ----
@@ -299,6 +363,70 @@ def register_user():
             return redirect(url_for("register_user"))
     # GET
     return render_template("create_user.html")
+
+
+@app.route("/usuarios/update/<int:user_id>", methods=["POST"])
+def update_user_route(user_id):
+    try:
+        # Recoger datos del formulario
+        mail = request.form["mail"]
+        contrasena = request.form["contrasena"]
+        rol = request.form["rol"]
+        nombre = request.form["nombre"]
+
+        affected = update_user(user_id, mail, contrasena, rol, nombre)
+
+        if affected == 1:
+            flash("Usuario actualizado correctamente.", "success")
+        else:
+            flash("No se encontró el usuario o no se realizaron cambios.", "warning")
+
+    except Exception as e:
+        flash(f"Error al actualizar el usuario: {e}", "danger")
+
+    return redirect(
+        url_for("list_users_route")
+    )  # Ajusta el nombre de la vista si es diferente
+
+
+@app.route("/usuarios/delete/<int:user_id>", methods=["POST"])
+def delete_user_route(user_id):
+    try:
+        affected = delete_user(user_id)
+
+        if affected == 1:
+            flash("Usuario eliminado correctamente.", "success")
+        else:
+            flash("No se encontró el usuario a eliminar.", "warning")
+
+    except Exception as e:
+        flash(f"Error al eliminar el usuario: {e}", "danger")
+
+    return redirect(
+        url_for("list_users_route")
+    )  # Cambia esto al nombre real de tu vista de listado
+
+
+@app.route("/equipos/<int:id>/deactivate", methods=["POST"])
+def deactivate_equipment_route(id):
+    try:
+        causa_baja = request.form.get("motivo_baja")
+
+        if not causa_baja:
+            flash("Debes proporcionar un motivo de baja.", "warning")
+            return redirect(url_for("list_equipments_route"))
+
+        affected = deactivate_equipment(id, causa_baja)
+
+        if affected == 1:
+            flash("Equipo dado de baja correctamente.", "success")
+        else:
+            flash("No se encontró el equipo o no se realizó ningún cambio.", "warning")
+
+    except Exception as e:
+        flash(f"Error al dar de baja el equipo: {e}", "danger")
+
+    return redirect(url_for("list_equipment_route"))
 
 
 # Ruta para LISTAR usuarios
