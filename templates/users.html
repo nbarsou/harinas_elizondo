@@ -1,8 +1,24 @@
 {% extends "base.html" %}
-{% block title %}Usuarios{% endblock %}
-
+{% block title %}Usuarios Registrados{% endblock %}
 {% block content %}
-<h2 class="mb-4">Usuarios Registrados</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Usuarios Registrados</h2>
+    <div class="dropdown">
+        <button class="btn btn-primary dropdown-toggle" type="button" id="actionMenu" data-bs-toggle="dropdown" aria-expanded="false">
+            Acciones
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="actionMenu">
+            <li><a class="dropdown-item" href="{{ url_for('register_user') }}">Dar de Alta Usuario</a></li>
+            <li>
+                <hr class="dropdown-divider">
+            </li>
+            <li><button class="dropdown-item" id="btn-edit" disabled>Editar</button></li>
+            <li><button class="dropdown-item" id="btn-view" disabled>Ver</button></li>
+            <li><button class="dropdown-item" id="btn-delete" disabled>Eliminar</button></li>
+        </ul>
+    </div>
+</div>
+{% if users%}
 <div class="card shadow-sm">
     <div class="table-responsive">
         <table class="table table-hover mb-0">
@@ -16,24 +32,165 @@
             </thead>
             <tbody>
                 {% for u in users %}
-                <tr>
+                <tr class="selectable-row" data-id="{{ u.id_usuario}}" data-user='{{ u | tojson | safe }}'>
                     <td>{{ u.id_usuario }}</td>
                     <td>{{ u.nombre }}</td>
                     <td>{{ u.mail }}</td>
                     <td>{{ u.rol }}</td>
                 </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" class="text-center py-4">No hay usuarios registrados.</td>
-                </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-    <div class="p-4 text-end">
-        <a href="{{ url_for('register_user') }}" class="btn btn-primary">
-            Crear Nuevo Usuario
-        </a>
+</div>
+{% else %}
+<div class="alert alert-info">No hay usuarios registrados todavía.</div>
+{% endif %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let selectedId = null;
+    let usuario = null;
+
+    const rows = document.querySelectorAll('.selectable-row');
+    const editBtn = document.getElementById('btn-edit');
+    const viewBtn = document.getElementById('btn-view');
+    const deleteBtn = document.getElementById('btn-delete');
+
+    rows.forEach(row => {
+        row.addEventListener('click', () => {
+            rows.forEach(r => r.classList.remove('table-primary'));
+            row.classList.add('table-primary');
+
+            selectedId = row.dataset.id;
+            [editBtn, viewBtn, deleteBtn].forEach(btn => btn.disabled = false);
+            
+            const data = document.querySelector(`tr[data-id="${selectedId}"]`)
+            usuario = JSON.parse(row.dataset.user);  // Asegúrate de tener data-usuario='...' en la fila
+
+        });
+    });
+
+    editBtn.onclick = () => {
+        const modal = document.getElementById('editModal');
+        const form = modal.querySelector('#editForm');
+        form.action = `/usuarios/update/${usuario.id_usuario}`;
+
+        form.querySelector('input[name="nombre"]').value = usuario.nombre || '';
+        form.querySelector('input[name="mail"]').value = usuario.mail || '';
+        form.querySelector('input[name="contrasena"]').value = usuario.contrasena || '';
+        form.querySelector('select[name="rol"]').value = usuario.rol || '';
+
+        modal.querySelector('.modal-title').textContent = `Editar Usuario - ${usuario.nombre}`;
+        new bootstrap.Modal(modal).show();
+    };
+
+    viewBtn.onclick = () => {
+        const modal = document.getElementById('viewModal');
+        modal.querySelector('.modal-title').textContent = `Información Usuario - ${usuario.nombre}`;
+
+        document.getElementById('view-id').textContent = usuario.id_usuario || '-';
+        document.getElementById('view-nombre').textContent = usuario.nombre || '-';
+        document.getElementById('view-mail').textContent = usuario.mail || '-';
+        document.getElementById('view-password').textContent = usuario.contrasena|| '-';
+        document.getElementById('view-rol').textContent = usuario.rol || '-';
+
+        new bootstrap.Modal(modal).show();
+    };
+
+    deleteBtn.onclick = () => {
+        const modal = document.getElementById('deleteModal');
+        const form = document.getElementById('deleteForm');
+        const title = modal.querySelector('.modal-title');
+
+        form.action = `/usuarios/delete/${usuario.id_usuario}`; 
+        document.getElementById('deleteModalText').textContent =
+            `¿Estás seguro que deseas eliminar el equipo #${selectedId}?`;
+        new bootstrap.Modal(modal).show();
+    };
+});
+</script>
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="editForm" method="POST">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Usuario</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" name="nombre" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Correo</label>
+            <input type="email" name="mail" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Rol</label>
+            <select name="rol" id="rol" class="form-select" required>
+              <option value="" disabled selected>Selecciona un rol…</option>
+              <option value="Gerencia de Control de Calidad">Gerencia de Control de Calidad</option>
+              <option value="Gerencia de laboratorio">Gerencia de laboratorio</option>
+              <option value="Gerencia de Aseguramiento de Calidad">Gerencia de Aseguramiento de Calidad</option>
+              <option value="Gerente de Plantas">Gerente de Plantas</option>
+              <option value="Director de Operaciones">Director de Operaciones</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Contraseña</label>
+            <input type="text" name="contrasena" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- View Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Información Usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>ID:</strong> <span id="view-id"></span></p>
+        <p><strong>Nombre:</strong> <span id="view-nombre"></span></p>
+        <p><strong>Correo:</strong> <span id="view-mail"></span></p>
+        <p><strong>Contraseña:</strong> <span id="view-password"></span></p>
+        <p><strong>Rol:</strong> <span id="view-rol"></span></p>
+      </div>
     </div>
+  </div>
+</div>
+<!-- Deactivate Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="deleteForm" method="POST">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Eliminar Usuario</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <p id="deleteModalText"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Si, eliminar</button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}

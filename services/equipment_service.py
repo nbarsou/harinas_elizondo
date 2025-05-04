@@ -60,23 +60,26 @@ def create_equipment(
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
-        cursor.execute(query, (
-            tipo,
-            clave,
-            marca,
-            modelo,
-            serie,
-            descripcion_larga,
-            descripcion_corta,
-            proveedor,
-            fecha_adquisicion,
-            garantia,
-            vigencia_garantia,
-            ubicacion,
-            encargado,
-            estado,
-            causa_baja
-        ))
+        cursor.execute(
+            query,
+            (
+                tipo,
+                clave,
+                marca,
+                modelo,
+                serie,
+                descripcion_larga,
+                descripcion_corta,
+                proveedor,
+                fecha_adquisicion,
+                garantia,
+                vigencia_garantia,
+                ubicacion,
+                encargado,
+                estado,
+                causa_baja,
+            ),
+        )
         equipment_id = cursor.lastrowid
 
     if equipment_id:
@@ -121,7 +124,7 @@ def update_equipment(
     vigencia_garantia: str | None,
     ubicacion: str | None,
     encargado: int | None,
-    estado: str,
+    estado: str | None,
     causa_baja: str | None,
 ) -> int:
     """
@@ -142,7 +145,7 @@ def update_equipment(
     - vigencia_garantia (str | None): Nueva vigencia de la garantía.
     - ubicacion (str | None): Nueva ubicación del equipo.
     - encargado (int | None): Nuevo ID del usuario encargado del equipo.
-    - estado (str): Nuevo estado del equipo.
+    - estado (str | None): Nuevo estado del equipo.
     - causa_baja (str | None): Nueva causa de baja del equipo (si aplica).
 
     Retorna:
@@ -158,24 +161,27 @@ def update_equipment(
                 ubicacion = ?, encargado = ?, estado = ?, causa_baja = ?
             WHERE id_equipo = ?
         """
-        cursor.execute(query, (
-            tipo,
-            clave,
-            marca,
-            modelo,
-            serie,
-            descripcion_larga,
-            descripcion_corta,
-            proveedor,
-            fecha_adquisicion,
-            garantia,
-            vigencia_garantia,
-            ubicacion,
-            encargado,
-            estado,
-            causa_baja,
-            id_equipo
-        ))
+        cursor.execute(
+            query,
+            (
+                tipo,
+                clave,
+                marca,
+                modelo,
+                serie,
+                descripcion_larga,
+                descripcion_corta,
+                proveedor,
+                fecha_adquisicion,
+                garantia,
+                vigencia_garantia,
+                ubicacion,
+                encargado,
+                estado,
+                causa_baja,
+                id_equipo,
+            ),
+        )
         affected_rows = cursor.rowcount
 
     return affected_rows

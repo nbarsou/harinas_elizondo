@@ -15,7 +15,9 @@ import json
 def _build_config_json(use_custom: bool, form: dict, client_id: int) -> str:
     params = {}
     if not use_custom:
-        path_default = os.path.join(os.path.dirname(__file__), "parametros_default.json")
+        path_default = os.path.join(
+            os.path.dirname(__file__), "parametros_default.json"
+        )
         with open(path_default, "r", encoding="utf-8") as f:
             params = json.load(f)
     else:
@@ -38,7 +40,7 @@ def create_client(
     contrasena: str,
     motivo_baja: str | None,
     use_custom_params: bool,
-    form_data: dict
+    form_data: dict,
 ) -> int | None:
     """
     Crea un nuevo cliente en la base de datos.
@@ -90,7 +92,7 @@ def create_client(
         configuracion_json = _build_config_json(use_custom_params, form_data, client_id)
         cursor.execute(
             "UPDATE CLIENTE SET configuracion_json = ? WHERE id_cliente = ?",
-            (configuracion_json, client_id)
+            (configuracion_json, client_id),
         )
         conn.commit()
 
@@ -251,7 +253,7 @@ def create_default_config_file():
     """
     Crea el archivo parametros_default.json con los parámetros por defecto.
     Esta función se debe llamar una sola vez al iniciar el programa para crear el archivo default.
-    
+
     Parámetros:
       - client_id (int): ID del cliente.
       - config (dict): Diccionario con los parámetros de configuración del cliente.
@@ -276,14 +278,14 @@ def create_default_config_file():
             "absorcion_de_agua": {"inf": 55, "sup": 65},
             "tiempo_de_desarrollo": {"inf": 1.5, "sup": 3.0},
             "estabilidad": {"inf": 5, "sup": 10},
-            "indice_de_tolerancia": {"inf": 70, "sup": 110}
+            "indice_de_tolerancia": {"inf": 70, "sup": 110},
         },
         "alveografo": {
             "W": {"inf": 180, "sup": 350},
             "P": {"inf": 70, "sup": 130},
             "L": {"inf": 90, "sup": 140},
-            "relacion_P_L": {"inf": 0.5, "sup": 1.0}
-        }
+            "relacion_P_L": {"inf": 0.5, "sup": 1.0},
+        },
     }
     with open(DEFAULT_CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(default_params, f, indent=4)
