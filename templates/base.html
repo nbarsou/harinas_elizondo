@@ -37,7 +37,21 @@
                     <li class="nav-item"><a class="nav-link" href="{{url_for('list_equipment_route')}}">Equipos</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{url_for('list_users_route')}}">Usuarios</a></li>
                 </ul>
-                <span class="navbar-text text-white">Juan Pérez▼</span>
+                {% if current_user.is_authenticated %}
+                <ul class="navbar-nav">
+                  <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle text-white" href="#" id="userDropdown"
+                       role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      {{ current_user.nombre }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                      <li>
+                        <a class="dropdown-item" href="{{ url_for('logout') }}">Cerrar sesión</a>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+                {% endif %}
             </div>
         </div>
     </nav>

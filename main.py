@@ -50,7 +50,7 @@ app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "sign_in"  # type: ignore
-app.secret_key = "clave_super_secreta_y_unica_123"
+app.secret_key = "75495d1095c8b21c5533b9e8b68e5fbae6f17f9cde886c6636eb2cea8bede721"
 
 # Clase que representa al usuario autenticado (usado por Flask-Login)
 class User(UserMixin):
@@ -107,6 +107,10 @@ def home():
     return redirect(url_for("sign_in"))
 
 
+# -----------------------------------
+# Usuarios
+# -----------------------------------
+
 # Ruta de inicio de sesión
 @app.route("/signin", methods=["GET", "POST"])
 def sign_in():
@@ -129,6 +133,14 @@ def sign_in():
             flash("Correo o contraseña incorrectos", "danger")
 
     return render_template("signin.html")
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("Has cerrado sesión exitosamente.", "info")
+    return redirect(url_for("sign_in"))
 
 
 # Ruta principal (dashboard) después del login
