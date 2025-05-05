@@ -10,34 +10,56 @@ import json
 import sqlite3
 
 
-def create_inspection(numero_lote, fecha, id_equipo, secuencia, tipo_inspeccion, parametros_analizados, id_laboratorista):
-     with db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("""
-    INSERT INTO inspeccion (
-        numero_lote, fecha, id_equipo, secuencia, tipo_inspeccion, parametros_analizados, id_laboratorista
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)
-""", (
+def create_inspection(
     numero_lote,
     fecha,
     id_equipo,
     secuencia,
     tipo_inspeccion,
-    json.dumps(parametros_analizados),
-    id_laboratorista
-))
+    parametros_analizados,
+    id_laboratorista,
+):
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+    INSERT INTO inspeccion (
+        numero_lote, fecha, id_equipo, secuencia, tipo_inspeccion, parametros_analizados, id_laboratorista
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+""",
+            (
+                numero_lote,
+                fecha,
+                id_equipo,
+                secuencia,
+                tipo_inspeccion,
+                json.dumps(parametros_analizados),
+                id_laboratorista,
+            ),
+        )
+
 
 def list_inspections():
     with db_connection() as conn:
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("""
-            SELECT i.id_inspeccion, i.numero_lote, i.secuencia, i.tipo_inspeccion, i.fecha, e.nombre AS equipo_nombre, i.id_laboratorista
+        cursor.execute(
+            """
+            SELECT 
+                i.id_inspeccion,
+                i.numero_lote,
+                i.secuencia,
+                i.tipo_inspeccion,
+                i.fecha,
+                e.descripcion_corta AS equipo_nombre,
+                i.id_laboratorista
             FROM inspeccion i
             JOIN equipo_laboratorio e ON i.id_equipo = e.id_equipo
             ORDER BY i.id_inspeccion DESC
-        """)
-        inspections = cursor.fetchall()
-    return inspections
+            """
+        )
+        rows = cursor.fetchall()
+    return [dict(row) for row in rows]
 
 
 def get_inspection(id_inspeccion: int) -> dict | None:
@@ -101,16 +123,19 @@ def update_inspection(
                 parametros_analizados = ?, tipo_inspeccion = ?, id_laboratorista = ?
             WHERE id_inspeccion = ?
         """
-        cursor.execute(query, (
-            numero_lote,
-            fecha,
-            id_equipo,
-            secuencia,
-            parametros_analizados,
-            tipo_inspeccion,
-            id_laboratorista,
-            id_inspeccion
-        ))
+        cursor.execute(
+            query,
+            (
+                numero_lote,
+                fecha,
+                id_equipo,
+                secuencia,
+                parametros_analizados,
+                tipo_inspeccion,
+                id_laboratorista,
+                id_inspeccion,
+            ),
+        )
         affected_rows = cursor.rowcount
 
     return affected_rows
@@ -133,40 +158,6 @@ def delete_inspection(id_inspeccion: int) -> int:
         affected_rows = cursor.rowcount
 
     return affected_rows
-
-
-def list_inspections():
-    with db_connection() as conn:
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT i.id_inspeccion, i.numero_lote, i.fecha, i.id_equipo,
-                   i.secuencia, i.parametros_analizados, i.tipo_inspeccion,
-                   i.id_laboratorista,
-                   e.tipo || ' - ' || e.marca || ' ' || e.modelo AS equipo_nombre
-            FROM INSPECCION i
-            LEFT JOIN EQUIPO_LABORATORIO e ON i.id_equipo = e.id_equipo
-            ORDER BY i.id_inspeccion ASC
-        """)
-        return cursor.fetchall()
-    """
-    Obtiene la lista de todas las inspecciones en la base de datos.
-
-    Retorna:
-    - list: Lista de diccionarios, donde cada diccionario representa una inspección.
-    - Lista vacía si no hay inspecciones en la base de datos.
-    """
-    with db_connection() as conn:
-        cursor = conn.cursor()
-        query = """
-            SELECT id_inspeccion, numero_lote, fecha, id_equipo, secuencia, 
-                   parametros_analizados, tipo_inspeccion, id_laboratorista
-            FROM INSPECCION
-        """
-        cursor.execute(query)
-        rows = cursor.fetchall()
-
-    return [dict(row) for row in rows]
 
 def get_all_inspections() -> list[dict]:
     with db_connection() as conn:
