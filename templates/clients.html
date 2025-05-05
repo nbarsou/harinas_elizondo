@@ -16,6 +16,8 @@
             <li><button class="dropdown-item" id="btn-view" disabled>Ver</button></li>
             <li><button class="dropdown-item" id="btn-deactivate" disabled>Dar de Baja</button></li>
             <li><button class="dropdown-item" id="btn-delete" disabled>Eliminar</button></li>
+            <li><button class="dropdown-item" id="btn-addresses" disabled>Direcciones</button></li>
+
         </ul>
     </div>
 </div>
@@ -62,6 +64,8 @@
         const viewBtn = document.getElementById('btn-view');
         const deactivateBtn = document.getElementById('btn-deactivate');
         const deleteBtn = document.getElementById('btn-delete');
+        const addressesBtn  = document.getElementById('btn-addresses');   // NUEVO
+
         rows.forEach(row => {
             row.addEventListener('click', () => {
                 // Quitar selección anterior
@@ -69,7 +73,7 @@
                 row.classList.add('table-primary');
                 // Guardar el ID y habilitar botones
                 selectedId = row.dataset.id;
-                [editBtn, viewBtn, deactivateBtn,deleteBtn].forEach(btn => btn.disabled = false);
+                [editBtn, viewBtn, deactivateBtn, deleteBtn, addressesBtn].forEach(btn => btn.disabled = false);
                 const data = document.querySelector(`tr[data-id="${selectedId}"]`)
                 cliente = JSON.parse(row.dataset.cliente)
             });
@@ -140,7 +144,10 @@
 
             new bootstrap.Modal(modal).show();
         };
-
+        addressesBtn.onclick = () => {
+            if (!selectedId) return;
+            window.location.href = `/clients/${selectedId}/addresses`;
+        };
     });
 </script>
 <!-- Edit Modal -->

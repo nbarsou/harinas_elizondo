@@ -35,6 +35,13 @@ from services.client_service import (
     deactivate_client,
     delete_client,
 )
+from services.address_service import (
+    list_addresses,
+    create_address,
+    update_address,
+    delete_address,
+)
+
 from services.inspection_service import (
     create_inspection,
     list_inspections,
@@ -296,6 +303,79 @@ def delete_client_route(client_id):
         url_for("list_clients_route")
     )  # Ajusta con tu nombre real de la vista
 
+# -----------------------------------
+# DIRECCIONES DE CLIENTE
+# -----------------------------------
+
+# (GET) Lista de direcciones de un cliente
+@app.route("/clients/<int:id>/addresses", methods=["GET"])
+@login_required
+@role_required("Admin", "Director de Operaciones")
+def list_addresses_route(id: int):
+    cliente = get_client(id)
+    if cliente is None:
+        abort(404)
+    direcciones = list_addresses(id)
+    return render_template(
+        "addresses.html",
+        cliente=cliente,
+        direcciones=direcciones,
+    )
+
+
+# (POST) Crear nueva dirección
+@app.route("/clients/<int:id>/addresses/create", methods=["POST"])
+@login_required
+@role_required("Admin", "Director de Operaciones")
+def create_address_route(id: int):
+    try:
+        create_address(
+            id_cliente=id,
+            calle=request.form["calle"],
+            num_exterior=request.form.get("num_exterior"),
+            num_interior=request.form.get("num_interior"),
+            codigo_postal=request.form["codigo_postal"],
+            delegacion=request.form["delegacion"],
+            estado=request.form["estado"],
+        )
+        flash("Dirección agregada correctamente", "success")
+    except Exception as e:
+        flash(f"Error al agregar dirección: {e}", "danger")
+    return redirect(url_for("list_addresses_route", id=id))
+
+
+# (POST) Actualizar dirección existente
+@app.route("/clients/<int:id>/addresses/update/<int:id_dir>", methods=["POST"])
+@login_required
+@role_required("Admin", "Director de Operaciones")
+def update_address_route(id: int, id_dir: int):
+    try:
+        update_address(
+            id_direccion=id_dir,
+            calle=request.form["calle"],
+            num_exterior=request.form.get("num_exterior"),
+            num_interior=request.form.get("num_interior"),
+            codigo_postal=request.form["codigo_postal"],
+            delegacion=request.form["delegacion"],
+            estado=request.form["estado"],
+        )
+        flash("Dirección actualizada", "info")
+    except Exception as e:
+        flash(f"Error al actualizar dirección: {e}", "danger")
+    return redirect(url_for("list_addresses_route", id=id))
+
+
+# (POST) Eliminar dirección
+@app.route("/clients/<int:id>/addresses/delete/<int:id_dir>", methods=["POST"])
+@login_required
+@role_required("Admin", "Director de Operaciones")
+def delete_address_route(id: int, id_dir: int):
+    try:
+        delete_address(id_dir)
+        flash("Dirección eliminada", "warning")
+    except Exception as e:
+        flash(f"Error al eliminar dirección: {e}", "danger")
+    return redirect(url_for("list_addresses_route", id=id))
 
 # -----------------------------------
 # INSPECCIONES
