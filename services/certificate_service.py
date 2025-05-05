@@ -6,6 +6,8 @@ Este servicio permite recuperar todos los IDs de certificados y obtener informac
 """
 
 from db import db_connection
+import sqlite3
+
 
 
 def create_certificate(
@@ -24,42 +26,68 @@ def create_certificate(
     destinatario_correo: str,
 ) -> int:
     """
-    Crea un nuevo certificado de calidad en la base de datos.
-
-    Parámetros:
-    - id_cliente (int): ID del cliente al que pertenece el certificado.
-    - id_inspeccion (int): ID de la inspección asociada al certificado.
-    - secuencia_inspeccion (str): Código de secuencia de la inspección.
-    - orden_compra (str): Número de orden de compra asociada.
-    - cantidad_solicitada (float): Cantidad total solicitada en la certificación.
-    - cantidad_entregada (float): Cantidad total entregada.
-    - numero_factura (str): Número de factura asociado al certificado.
-    - fecha_envio (str): Fecha en que se realizó el envío (Formato: YYYY-MM-DD).
-    - fecha_caducidad (str): Fecha de caducidad del certificado (Formato: YYYY-MM-DD).
-    - resultados_analisis (str): Resultados de los análisis de calidad.
-    - compara_referencias (str): Información sobre la comparación de resultados con referencias.
-    - desviaciones (str): Registro de desviaciones en los resultados.
-    - destinatario_correo (str): Correo electrónico del destinatario del certificado.
+    Inserta un nuevo registro de certificado de calidad en la base de datos.
 
     Retorna:
-    - int: ID del certificado creado.
+    - ID del nuevo certificado insertado.
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO CERTIFICADO_CALIDAD (
+                id_cliente,
+                id_inspeccion,
+                secuencia_inspeccion,
+                orden_compra,
+                cantidad_solicitada,
+                cantidad_entregada,
+                numero_factura,
+                fecha_envio,
+                fecha_caducidad,
+                resultados_analisis,
+                compara_referencias,
+                desviaciones,
+                destinatario_correo
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            id_cliente,
+            id_inspeccion,
+            secuencia_inspeccion,
+            orden_compra,
+            cantidad_solicitada,
+            cantidad_entregada,
+            numero_factura,
+            fecha_envio,
+            fecha_caducidad,
+            resultados_analisis,
+            compara_referencias,
+            desviaciones,
+            destinatario_correo
+        ))
+        return cursor.lastrowid
 
 
 def get_certificate(id_certificado: int) -> dict | None:
     """
-    Obtiene un certificado de calidad por su ID.
-
-    Parámetros:
-    - id_certificado (int): ID del certificado a buscar.
+    Recupera un certificado de calidad por su ID.
 
     Retorna:
-    - dict: Información del certificado si existe.
-    - None: Si el certificado no se encuentra en la base de datos.
+    - dict con los campos del certificado si existe.
+    - None si no se encuentra.
     """
-    pass
+    with db_connection() as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT *
+            FROM CERTIFICADO_CALIDAD
+            WHERE id_certificado = ?
+        """, (id_certificado,))
+        row = cursor.fetchone()
 
+    if row:
+        return dict(row)
+    return None
 
 def update_certificate(
     id_certificado: int,
@@ -78,49 +106,80 @@ def update_certificate(
     destinatario_correo: str,
 ) -> int:
     """
-    Actualiza la información de un certificado en la base de datos.
-
-    Parámetros:
-    - id_certificado (int): ID del certificado a actualizar.
-    - id_cliente (int): Nuevo ID del cliente.
-    - id_inspeccion (int): Nuevo ID de la inspección asociada.
-    - secuencia_inspeccion (str): Nueva secuencia de inspección.
-    - orden_compra (str): Nueva orden de compra.
-    - cantidad_solicitada (float): Nueva cantidad solicitada.
-    - cantidad_entregada (float): Nueva cantidad entregada.
-    - numero_factura (str): Nuevo número de factura.
-    - fecha_envio (str): Nueva fecha de envío (Formato: YYYY-MM-DD).
-    - fecha_caducidad (str): Nueva fecha de caducidad (Formato: YYYY-MM-DD).
-    - resultados_analisis (str): Nuevos resultados de análisis.
-    - compara_referencias (str): Nueva comparación con referencias.
-    - desviaciones (str): Nuevas desviaciones detectadas.
-    - destinatario_correo (str): Nuevo destinatario del certificado.
+    Actualiza un certificado de calidad existente en la base de datos.
 
     Retorna:
-    - int: Número de filas afectadas (1 si se actualizó, 0 si no se encontró el certificado).
+    - Número de filas afectadas (1 si se actualizó, 0 si no se encontró).
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE CERTIFICADO_CALIDAD
+            SET id_cliente = ?,
+                id_inspeccion = ?,
+                secuencia_inspeccion = ?,
+                orden_compra = ?,
+                cantidad_solicitada = ?,
+                cantidad_entregada = ?,
+                numero_factura = ?,
+                fecha_envio = ?,
+                fecha_caducidad = ?,
+                resultados_analisis = ?,
+                compara_referencias = ?,
+                desviaciones = ?,
+                destinatario_correo = ?
+            WHERE id_certificado = ?
+        """, (
+            id_cliente,
+            id_inspeccion,
+            secuencia_inspeccion,
+            orden_compra,
+            cantidad_solicitada,
+            cantidad_entregada,
+            numero_factura,
+            fecha_envio,
+            fecha_caducidad,
+            resultados_analisis,
+            compara_referencias,
+            desviaciones,
+            destinatario_correo,
+            id_certificado
+        ))
+        return cursor.rowcount
 
 
 def delete_certificate(id_certificado: int) -> int:
     """
-    Elimina un certificado de calidad de la base de datos.
-
-    Parámetros:
-    - id_certificado (int): ID del certificado a eliminar.
+    Elimina un certificado de calidad por su ID.
 
     Retorna:
-    - int: Número de filas afectadas (1 si el certificado fue eliminado, 0 si no existía).
+    - Número de filas afectadas (1 si se eliminó, 0 si no existía).
     """
-    pass
+    with db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            DELETE FROM CERTIFICADO_CALIDAD
+            WHERE id_certificado = ?
+        """, (id_certificado,))
+        return cursor.rowcount
 
 
-def list_certificates() -> list:
+
+def list_certificates() -> list[dict]:
     """
-    Obtiene la lista de todos los certificados de calidad en la base de datos.
+    Devuelve todos los certificados registrados en la base de datos.
 
     Retorna:
-    - list: Lista de diccionarios, donde cada diccionario representa un certificado.
-    - Lista vacía si no hay certificados en la base de datos.
+    - Lista de diccionarios, cada uno representando un certificado.
+    - Lista vacía si no hay certificados.
     """
-    pass
+    with db_connection() as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT *
+            FROM CERTIFICADO_CALIDAD
+            ORDER BY id_certificado DESC
+        """)
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]

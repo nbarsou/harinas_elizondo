@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% block title %}Certificados de Calidad{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Certificados de Calidad Emitidos</h2>
+
+<!-- Tabla de certificados existentes -->
+<div class="card shadow-sm mb-5">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Inspección</th>
+                    <th>Secuencia</th>
+                    <th>Orden de Compra</th>
+                    <th>Fecha Envío</th>
+                    <th>Correo Destinatario</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cert in certificados %}
+                <tr>
+                    <td>{{ cert.id_certificado }}</td>
+                    <td>{{ cert.id_cliente }}</td>
+                    <td>{{ cert.id_inspeccion }}</td>
+                    <td>{{ cert.secuencia_inspeccion }}</td>
+                    <td>{{ cert.orden_compra }}</td>
+                    <td>{{ cert.fecha_envio }}</td>
+                    <td>{{ cert.destinatario_correo }}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-secondary" data-bs-toggle="modal"
+                            data-bs-target="#viewModal{{ cert.id_certificado }}">Ver</button>
+                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                            data-bs-target="#deleteModal{{ cert.id_certificado }}">Borrar</button>
+                    </td>
+                </tr>
+
+                <!-- Modal: Ver -->
+                <div class="modal fade" id="viewModal{{ cert.id_certificado }}" tabindex="-1"
+                    aria-labelledby="viewModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Certificado #{{ cert.id_certificado }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>ID Cliente:</strong> {{ cert.id_cliente }}</p>
+                                <p><strong>ID Inspección:</strong> {{ cert.id_inspeccion }}</p>
+                                <p><strong>Secuencia:</strong> {{ cert.secuencia_inspeccion }}</p>
+                                <p><strong>Orden de Compra:</strong> {{ cert.orden_compra }}</p>
+                                <p><strong>Cantidad Solicitada:</strong> {{ cert.cantidad_solicitada }}</p>
+                                <p><strong>Cantidad Entregada:</strong> {{ cert.cantidad_entregada }}</p>
+                                <p><strong>Número de Factura:</strong> {{ cert.numero_factura }}</p>
+                                <p><strong>Fecha de Envío:</strong> {{ cert.fecha_envio }}</p>
+                                <p><strong>Fecha de Caducidad:</strong> {{ cert.fecha_caducidad }}</p>
+                                <p><strong>Parámetros Analizados:</strong></p>
+                                <pre class="bg-light p-2 rounded small">{{ cert.resultados_analisis }}</pre>
+                                <p><strong>Comparación con Referencias:</strong></p>
+                                <pre class="bg-light p-2 rounded small">{{ cert.compara_referencias }}</pre>
+                                <p><strong>Desviaciones:</strong></p>
+                                <pre class="bg-light p-2 rounded small">{{ cert.desviaciones }}</pre>
+                                <p><strong>Correo del Cliente:</strong> {{ cert.destinatario_correo }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal: Eliminar -->
+                <div class="modal fade" id="deleteModal{{ cert.id_certificado }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <form method="POST" action="{{ url_for('delete_certificate_route', id=cert.id_certificado) }}">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    ¿Seguro que deseas eliminar el certificado #{{ cert.id_certificado }}?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-4">No hay certificados registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Sección de emisión -->
+<h4 class="mb-3">Emitir nuevo certificado</h4>
+
+<!-- Botón para mostrar el formulario -->
+<button class="btn btn-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#formCertificado"
+    aria-expanded="false" aria-controls="formCertificado">
+    Llenar nuevo certificado
+</button>
+
+<!-- Formulario colapsable -->
+<div class="collapse" id="formCertificado">
+    <div class="card card-body shadow-sm">
+        <form method="POST" action="{{ url_for('create_certificate_route') }}">
+            <div class="row g-3">
+
+                <!-- Inspección -->
+                <div class="col-md-4">
+                    <label class="form-label">Inspección asociada</label>
+                    <select name="id_inspeccion" class="form-select" required>
+                        <option value="">Seleccione inspección…</option>
+                        {% for ins in inspecciones %}
+                        <option value="{{ ins.id_inspeccion }}">
+                            [#{{ ins.id_inspeccion }}] Lote {{ ins.numero_lote }} ({{ ins.secuencia }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Cliente -->
+                <div class="col-md-4">
+                    <label class="form-label">ID Cliente</label>
+                    <input type="number" name="id_cliente" class="form-control" required>
+                </div>
+
+                <!-- Secuencia -->
+                <div class="col-md-4">
+                    <label class="form-label">Secuencia de inspección</label>
+                    <input type="text" name="secuencia_inspeccion" class="form-control" required>
+                </div>
+
+                <!-- Orden de compra -->
+                <div class="col-md-4">
+                    <label class="form-label">Orden de compra</label>
+                    <input type="text" name="orden_compra" class="form-control">
+                </div>
+
+                <!-- Cantidades -->
+                <div class="col-md-4">
+                    <label class="form-label">Cantidad solicitada</label>
+                    <input type="number" step="any" name="cantidad_solicitada" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Cantidad entregada</label>
+                    <input type="number" step="any" name="cantidad_entregada" class="form-control">
+                </div>
+
+                <!-- Factura y fechas -->
+                <div class="col-md-4">
+                    <label class="form-label">Número de factura</label>
+                    <input type="text" name="numero_factura" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Fecha de envío</label>
+                    <input type="date" name="fecha_envio" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Fecha de caducidad</label>
+                    <input type="date" name="fecha_caducidad" class="form-control">
+                </div>
+
+                <!-- Comparación y desviaciones -->
+                <div class="col-md-6">
+                    <label class="form-label">Comparación con referencias</label>
+                    <textarea name="compara_referencias" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Desviaciones</label>
+                    <textarea name="desviaciones" class="form-control" rows="3"></textarea>
+                </div>
+
+                <!-- Correo -->
+                <div class="col-md-6">
+                    <label class="form-label">Correo destinatario</label>
+                    <input type="email" name="destinatario_correo" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="text-end mt-4">
+                <button type="submit" class="btn btn-success">Emitir certificado</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

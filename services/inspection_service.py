@@ -158,3 +158,14 @@ def delete_inspection(id_inspeccion: int) -> int:
         affected_rows = cursor.rowcount
 
     return affected_rows
+
+def get_all_inspections() -> list[dict]:
+    with db_connection() as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id_inspeccion, numero_lote, secuencia
+            FROM INSPECCION
+            ORDER BY id_inspeccion DESC
+        """)
+        return cursor.fetchall()
