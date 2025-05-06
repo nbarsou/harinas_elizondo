@@ -509,7 +509,8 @@ def register_equipment():
             return redirect(url_for("list_equipment_route"))
         except Exception as e:
             flash(f"Error: {e}", "danger")
-    return render_template("create_equipment.html")
+    users = list_users()  
+    return render_template("create_equipment.html", users=users)
 
 
 # Listado de equipos
