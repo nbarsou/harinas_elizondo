@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Direcciones de {{ cliente.nombre }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Direcciones de {{ cliente.nombre }}</h2>
+    <div class="dropdown">
+        <button class="btn btn-primary dropdown-toggle" type="button" id="actionMenu" data-bs-toggle="dropdown" aria-expanded="false">
+            Acciones
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="actionMenu">
+            <li><button class="dropdown-item" id="btn-add">Agregar Dirección</button></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><button class="dropdown-item" id="btn-edit" disabled>Editar</button></li>
+            <li><button class="dropdown-item" id="btn-delete" disabled>Eliminar</button></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><button class="dropdown-item" id="btn-back">Regresar a Clientes</button></li>
+        </ul>
+    </div>
+</div>
+
+{% if direcciones %}
+<table class="table table-hover">
+    <thead class="table-light">
+        <tr>
+            <th>ID</th>
+            <th>Calle</th>
+            <th>No. Ext</th>
+            <th>No. Int</th>
+            <th>C.P.</th>
+            <th>Delegación</th>
+            <th>Estado</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for d in direcciones %}
+        <tr data-id="{{ d.id_direccion }}" class="selectable-row" data-address='{{ d | tojson | safe }}'>
+            <td>{{ d.id_direccion }}</td>
+            <td>{{ d.calle }}</td>
+            <td>{{ d.num_exterior or '-' }}</td>
+            <td>{{ d.num_interior or '-' }}</td>
+            <td>{{ d.codigo_postal }}</td>
+            <td>{{ d.delegacion }}</td>
+            <td>{{ d.estado }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-info" role="alert">
+    Este cliente aún no tiene direcciones registradas.
+</div>
+{% endif %}
+
+<!-- Modal Alta / Edición -->
+<div class="modal fade" id="addressModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addressModalLabel">Agregar Dirección</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="addressForm" method="POST">
+      <div class="modal-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Calle</label>
+                    <input type="text" name="calle" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">No. Exterior</label>
+                    <input type="text" name="num_exterior" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">No. Interior</label>
+                    <input type="text" name="num_interior" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Código Postal</label>
+                    <input type="text" name="codigo_postal" class="form-control" required>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Delegación / Municipio</label>
+                    <input type="text" name="delegacion" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Estado</label>
+                    <input type="text" name="estado" class="form-control" required>
+                </div>
+            </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Confirmar Eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Eliminar Dirección</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        ¿Estás seguro de que deseas eliminar esta dirección?
+      </div>
+      <div class="modal-footer">
+        <form id="deleteForm" method="POST">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-danger" id="btn-confirm-delete">Eliminar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let selectedId = null;
+        let address = null;
+
+        const rows        = document.querySelectorAll('.selectable-row');
+        const addBtn      = document.getElementById('btn-add');
+        const editBtn     = document.getElementById('btn-edit');
+        const deleteBtn   = document.getElementById('btn-delete');
+        const backBtn     = document.getElementById('btn-back');
+
+        // Selección de fila
+        rows.forEach(row => {
+            row.addEventListener('click', () => {
+                rows.forEach(r => r.classList.remove('table-primary'));
+                row.classList.add('table-primary');
+                selectedId = row.dataset.id;
+                address = JSON.parse(row.dataset.address);
+                [editBtn, deleteBtn].forEach(btn => btn.disabled = false);
+            });
+        });
+
+        // Alta
+        addBtn.onclick = () => {
+            const modal = new bootstrap.Modal(document.getElementById('addressModal'));
+            const form  = document.getElementById('addressForm');
+            form.action = `/clients/{{ cliente.id_cliente }}/addresses/create`;
+            form.reset();
+            document.getElementById('addressModalLabel').textContent = 'Agregar Dirección';
+            modal.show();
+        };
+
+        // Edición
+        editBtn.onclick = () => {
+            if (!address) return;
+            const modal = new bootstrap.Modal(document.getElementById('addressModal'));
+            const form  = document.getElementById('addressForm');
+            form.action = `/clients/{{ cliente.id_cliente }}/addresses/update/${address.id_direccion}`;
+            form.querySelector('input[name="calle"]').value = address.calle || '';
+            form.querySelector('input[name="num_exterior"]').value = address.num_exterior || '';
+            form.querySelector('input[name="num_interior"]').value = address.num_interior || '';
+            form.querySelector('input[name="codigo_postal"]').value = address.codigo_postal || '';
+            form.querySelector('input[name="delegacion"]').value = address.delegacion || '';
+            form.querySelector('input[name="estado"]').value = address.estado || '';
+            document.getElementById('addressModalLabel').textContent = 'Editar Dirección';
+            modal.show();
+        };
+
+        // Eliminación
+        deleteBtn.onclick = () => {
+            if (!address) return;
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            const form  = document.getElementById('deleteForm');
+            form.action = `/clients/{{ cliente.id_cliente }}/addresses/delete/${address.id_direccion}`;
+            modal.show();
+        };
+
+        // Regresar a la lista de clientes
+        backBtn.onclick = () => window.location.href = '/clients';
+    });
+</script>
+{% endblock %}
