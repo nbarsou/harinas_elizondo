@@ -61,10 +61,10 @@
     <div class="col-md-6">
       <label class="form-label">Estado:</label>
       <select name="estado" class="form-select">
-        <option value="Operativo" {% if equipo.estado == "Operativo" %}selected{% endif %}>Operativo</option>
-        <option value="Mantenimiento" {% if equipo.estado == "Mantenimiento" %}selected{% endif %}>Mantenimiento</option>
-        <option value="Inactivo" {% if equipo.estado == "Inactivo" %}selected{% endif %}>Inactivo</option>
-        <option value="baja" {% if equipo.estado == "baja" %}selected{% endif %}>Dar de baja</option>
+        <option value="Operativo" {% if equipo.estado=="Operativo" %}selected{% endif %}>Operativo</option>
+        <option value="Mantenimiento" {% if equipo.estado=="Mantenimiento" %}selected{% endif %}>Mantenimiento</option>
+        <option value="Inactivo" {% if equipo.estado=="Inactivo" %}selected{% endif %}>Inactivo</option>
+        <option value="baja" {% if equipo.estado=="baja" %}selected{% endif %}>Dar de baja</option>
       </select>
     </div>
   </div>

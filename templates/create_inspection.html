@@ -1,104 +1,47 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block title %}Registrar Inspección{% endblock %}
 {% block content %}
-<h2 class="mb-4">Registrar Inspección</h2>
-<div class="card shadow-sm p-4">
-    <form action="{{ url_for('register_inspection') }}" method="POST">
-
-        <!-- Datos generales: lote, secuencia, tipo, fecha -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-4">
-                <label class="form-label">Número de Lote</label>
-                <input type="number" name="numero_lote" class="form-control" placeholder="12345" required>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Secuencia de Inspección</label>
-                <input type="text" name="secuencia" class="form-control" placeholder="A, B, C…" required>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Tipo de Inspección</label>
-                <input type="text" name="tipo_inspeccion" class="form-control" placeholder="A ó B" required>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Fecha</label>
-                <input type="date" name="fecha" class="form-control" required>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Equipo</label>
-                <select id="equipmentSelect" name="id_equipo" class="form-select" required>
-                    <option value="">Seleccione equipo…</option>
-                    <option value="1">Alveógrafo</option>
-                    <option value="2">Farinógrafo</option>
-                </select>
-            </div>
+<h2 class="mt-4">Registrar Inspección</h2>
+<form method="POST" action="/inspections/create" class="card p-4 shadow-sm">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label for="numero_lote" class="form-label">Número de Lote:</label>
+            <input id="numero_lote" name="numero_lote" type="text" class="form-control" required>
         </div>
-
-        <!-- Parámetros del Alveógrafo -->
-        <div id="alveo-params" class="mb-4 p-3 border rounded d-none">
-            <h6 class="mb-3">Parámetros – Alveógrafo</h6>
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">W</label>
-                    <input type="number" step="any" name="valor_W" class="form-control" placeholder="">
-                    <small class="text-muted">180 – 350</small>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">P</label>
-                    <input type="number" step="any" name="valor_P" class="form-control" placeholder="">
-                    <small class="text-muted">70 – 130</small>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">L</label>
-                    <input type="number" step="any" name="valor_L" class="form-control" placeholder="">
-                    <small class="text-muted">90 – 140</small>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">P/L</label>
-                    <input type="number" step="any" name="valor_relacion_P_L" class="form-control" placeholder="">
-                    <small class="text-muted">0.5 – 1.0</small>
-                </div>
-            </div>
+        <div class="col-md-4">
+            <label for="secuencia" class="form-label">Secuencia de Inspección:</label>
+            <input id="secuencia" name="secuencia" type="text" class="form-control" placeholder="A, B, C..." required>
         </div>
-
-        <!-- Parámetros del Farinógrafo -->
-        <div id="fari-params" class="mb-4 p-3 border rounded d-none">
-            <h6 class="mb-3">Parámetros – Farinógrafo</h6>
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">Absorción de agua</label>
-                    <input type="number" step="any" name="valor_absorcion_de_agua" class="form-control" placeholder="">
-                    <small class="text-muted">55 – 65</small>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Tiempo de desarrollo</label>
-                    <input type="number" step="any" name="valor_tiempo_de_desarrollo" class="form-control" placeholder="">
-                    <small class="text-muted">1.5 – 3.0</small>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Estabilidad</label>
-                    <input type="number" step="any" name="valor_estabilidad" class="form-control" placeholder="">
-                    <small class="text-muted">5 – 10</small>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Índice de tolerancia</label>
-                    <input type="number" step="any" name="valor_indice_de_tolerancia" class="form-control" placeholder="">
-                    <small class="text-muted">70 – 110</small>
-                </div>
-            </div>
+        <div class="col-md-4">
+            <label for="tipo_inspeccion" class="form-label">Tipo de Inspección:</label>
+            <input id="tipo_inspeccion" name="tipo_inspeccion" type="text" class="form-control" placeholder="A ó B"
+                required>
         </div>
-        <div class="text-end">
-            <button type="submit" class="btn btn-primary btn-lg">Confirmar</button>
+        <div class="col-md-4">
+            <label for="fecha" class="form-label">Fecha:</label>
+            <input id="fecha" name="fecha" type="date" class="form-control" value="{{ today }}" required>
         </div>
-    </form>
-</div>
-
-<script>
-    const eq = document.getElementById('equipmentSelect'),
-        aParams = document.getElementById('alveo-params'),
-        fParams = document.getElementById('fari-params');
-    eq.addEventListener('change', () => {
-        aParams.classList.toggle('d-none', eq.value !== '1');
-        fParams.classList.toggle('d-none', eq.value !== '2');
-    });
-</script>
+        <div class="col-md-4">
+            <label for="id_equipo" class="form-label">Equipo:</label>
+            <select id="id_equipo" name="id_equipo" class="form-select" required>
+                <option value="" disabled selected>Seleccione equipo...</option>
+                {% for eq in equipments %}
+                <option value="{{ eq.id_equipo }}">{{ eq.serie }} - {{ eq.tipo }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="id_laboratorista" class="form-label">Laboratorista (ID usuario):</label>
+            <select id="id_laboratorista" name="id_laboratorista" class="form-select" required>
+                <option value="" disabled selected>Seleccione laboratorista...</option>
+                {% for user in users %}
+                <option value="{{ user.id_usuario }}">{{ user.id_usuario }} - {{ user.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Confirmar</button>
+    </div>
+</form>
 {% endblock %}

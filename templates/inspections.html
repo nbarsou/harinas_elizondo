@@ -4,7 +4,8 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Inspecciones Registradas</h2>
     <div class="dropdown">
-        <button class="btn btn-primary dropdown-toggle" type="button" id="actionMenu" data-bs-toggle="dropdown" aria-expanded="false">
+        <button class="btn btn-primary dropdown-toggle" type="button" id="actionMenu" data-bs-toggle="dropdown"
+            aria-expanded="false">
             Acciones
         </button>
         <ul class="dropdown-menu" aria-labelledby="actionMenu">
@@ -18,7 +19,7 @@
         </ul>
     </div>
 </div>
-{% if inspections%}
+{% if inspections %}
 <div class="card shadow-sm">
     <div class="table-responsive">
         <table class="table table-hover mb-0">
@@ -30,19 +31,20 @@
                     <th>Secuencia</th>
                     <th>Tipo</th>
                     <th>Fecha</th>
-                    <th>Equipo</th>
+                    <th>Equipo (ID)</th>
                 </tr>
             </thead>
             <tbody>
                 {% for ins in inspections %}
-                <tr class="selectable-row" data-id="{{ ins.id_inspeccion }}" data-inspeccion='{{ ins | tojson | safe }}'>
+                <tr class="selectable-row" data-id="{{ ins.id_inspeccion }}"
+                    data-inspeccion='{{ ins | tojson | safe }}'>
                     <td>{{ ins.id_inspeccion }}</td>
                     <td>{{ ins.id_laboratorista }}</td>
                     <td>{{ ins.numero_lote }}</td>
                     <td>{{ ins.secuencia }}</td>
                     <td>{{ ins.tipo_inspeccion }}</td>
                     <td>{{ ins.fecha }}</td>
-                    <td>{{ ins.equipo_nombre }}</td>
+                    <td>{{ ins.id_equipo }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

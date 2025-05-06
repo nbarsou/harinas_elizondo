@@ -10,6 +10,8 @@ from flask_login import (
 )
 from functools import wraps
 from flask import abort
+from datetime import date
+
 
 # Bibliotecas para mandar certificados
 from xhtml2pdf import pisa  # falta en requirements
@@ -167,6 +169,7 @@ def logout():
 # Ruta principal (dashboard) después del login
 @app.route("/dashboard")
 @login_required
+@role_required("Admin", "Gerencia de Control de Calidad", "Gerencia de laboratorio","Gerencia de Aseguramiento de Calidad","Gerentes de Plantas", "Director de Operaciones")
 def dashboard():
     """
     Vista del dashboard principal.
@@ -182,7 +185,7 @@ def dashboard():
 # Registro de nuevos clientes
 @app.route("/clients/create", methods=["GET", "POST"])
 @login_required
-@role_required("Admin", "Director de Operaciones")
+@role_required("Admin", "Equipo de ventas", "Gerencia de Control de Calidad", "Gerencia de laboratorio")
 def register_client():
     if request.method == "POST":
         # Extrae los datos del formulario
@@ -228,7 +231,7 @@ def list_clients_route():
 # Edición de cliente existente
 @app.route("/clients/<int:id>/edit", methods=["POST"])
 @login_required
-@role_required("Admin", "Gerente de Operaciones")
+@role_required("Admin", "Equipo de ventas", "Gerencia de Control de Calidad", "Gerencia de laboratorio")
 def update_client_route(id):
     # Extrae datos y obtiene cliente original
     nombre = request.form["nombre"]
@@ -272,7 +275,7 @@ def update_client_route(id):
 # Baja lógica del cliente (sin borrarlo de la BD)
 @app.route("/clients/<int:id>/deactivate", methods=["POST"])
 @login_required
-@role_required("Admin", "Gerente de Operaciones")
+@role_required("Admin", "Equipo de ventas", "Gerencia de Control de Calidad", "Gerencia de laboratorio")
 def deactivate_client_route(id):
     motivo = request.form["motivo_baja"]
     try:
@@ -414,8 +417,15 @@ def register_inspection():
         flash("Inspección registrada correctamente.", "success")
         return redirect(url_for("list_inspections_route"))
 
-    return render_template("create_inspection.html")
-
+    today = date.today().isoformat()  # o como calcules la fecha por defecto
+    equipments = list_equipment()
+    users = list_users()
+    return render_template(
+    "create_inspection.html",
+    today=today,
+    equipments=equipments,
+    users=users
+    )
 
 # Listado de inspecciones
 # TODO: arreglar el query y como se registran
@@ -562,7 +572,7 @@ def certification():
 
 # Registro de nuevo equipo
 @login_required
-@role_required("Admin")
+@role_required("Admin", "Gerencia de laboratorio", "Gerencia de Control de Calidad")
 @app.route("/equipment/create", methods=["GET", "POST"])
 def register_equipment():
     if request.method == "POST":
@@ -588,7 +598,8 @@ def register_equipment():
             return redirect(url_for("list_equipment_route"))
         except Exception as e:
             flash(f"Error: {e}", "danger")
-    return render_template("create_equipment.html")
+    users = list_users()  
+    return render_template("create_equipment.html", users=users)
 
 
 # Listado de equipos
@@ -602,7 +613,7 @@ def list_equipment_route():
 # Edición de equipo
 @app.route("/equipos/<int:id>/edit", methods=["POST"])
 @login_required
-@role_required("Admin")
+@role_required("Admin", "Gerencia de laboratorio", "Gerencia de Control de Calidad")
 def edit_equipment(id):
     update_equipment(
         id_equipo=id,
@@ -631,7 +642,7 @@ def edit_equipment(id):
 # Baja lógica del equipo
 @app.route("/equipos/<int:id>/deactivate", methods=["POST"])
 @login_required
-@role_required("Admin")
+@role_required("Admin", "Gerencia de laboratorio", "Gerencia de Control de Calidad")
 def deactivate_equipment_route(id):
     try:
         causa_baja = request.form.get("motivo_baja")
@@ -675,7 +686,7 @@ def delete_equipment_route(id):
 # Registro de nuevo usuario
 @app.route("/users/create", methods=["GET", "POST"])
 @login_required
-@role_required("Admin")
+@role_required("Admin", "Gerencia de Control de Calidad", "Gerencia de laboratorio","Gerencia de Aseguramiento de Calidad","Gerentes de Plantas", "Director de Operaciones")
 def register_user():
     if request.method == "POST":
         nombre = request.form["nombre"]
@@ -696,6 +707,7 @@ def register_user():
 # Listado de usuarios
 @app.route("/users", methods=["GET"])
 @login_required
+@role_required("Admin", "Gerencia de Control de Calidad", "Gerencia de laboratorio")
 def list_users_route():
     users = list_users()
     return render_template("users.html", users=users)
@@ -704,7 +716,7 @@ def list_users_route():
 # Actualización de usuario
 @app.route("/usuarios/update/<int:user_id>", methods=["POST"])
 @login_required
-@role_required("Admin")
+@role_required("Admin","Gerencia de Control de Calidad", "Gerencia de laboratorio")
 def update_user_route(user_id):
     try:
         # Recoger datos del formulario

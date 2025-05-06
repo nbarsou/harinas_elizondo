@@ -58,6 +58,21 @@ def list_inspections():
             ORDER BY i.id_inspeccion DESC
             """
         )
+        cursor.execute(
+            """
+            SELECT
+                i.id_inspeccion,
+                i.numero_lote,
+                i.secuencia,
+                i.tipo_inspeccion,
+                i.fecha,
+                i.id_equipo,
+                i.id_laboratorista
+                FROM inspeccion i
+                ORDER BY i.id_inspeccion DESC
+                """
+             )
+
         rows = cursor.fetchall()
     return [dict(row) for row in rows]
 

@@ -4,19 +4,67 @@
 <h2 class="mt-4">Registrar Nuevo Equipo</h2>
 <form method="POST" action="/equipment/create" class="card p-4 shadow-sm">
     <div class="row g-3">
-        <div class="col-md-6"><label class="form-label">Tipo:</label><input name="tipo" class="form-control" required></div>
-        <div class="col-md-6"><label class="form-label">Clave:</label><input name="clave" class="form-control"></div>
-        <div class="col-md-6"><label class="form-label">Marca:</label><input name="marca" class="form-control"></div>
-        <div class="col-md-6"><label class="form-label">Modelo:</label><input name="modelo" class="form-control"></div>
-        <div class="col-md-6"><label class="form-label">Serie:</label><input name="serie" class="form-control"></div>
-        <div class="col-md-6"><label class="form-label">Descripción Larga:</label><input name="descripcion_larga" class="form-control"></div>
-        <div class="col-md-6"><label class="form-label">Descripción Corta:</label><input name="descripcion_corta" class="form-control"></div>
-        <div class="col-md-6"><label class="form-label">Proveedor:</label><input name="proveedor" class="form-control"></div>
-        <div class="col-md-6"><label class="form-label">Fecha de Adquisición:</label><input type="date" name="fecha_adquisicion" class="form-control"></div>
-        <div class="col-md-6"><label class="form-label">Garantía:</label><input name="garantia" class="form-control"></div>
-        <div class="col-md-6"><label class="form-label">Vigencia Garantía:</label><input name="vigencia_garantia" class="form-control"></div>
-        <div class="col-md-6"><label class="form-label">Ubicación:</label><input name="ubicacion" class="form-control"></div>
-        <div class="col-md-6"><label class="form-label">Responsable (ID usuario):</label><input name="encargado" type="number" class="form-control"></div>
+        <div class="col-md-6">
+            <label for="tipo" class="form-label">Tipo:</label>
+            <select id="tipo" name="tipo" class="form-select" required>
+                <option value="" disabled selected>Selecciona un tipo</option>
+                <option value="Alveógrafo">Alveógrafo</option>
+                <option value="Farinógrafo">Farinógrafo</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label for="clave" class="form-label">Clave:</label>
+            <input id="clave" name="clave" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label for="marca" class="form-label">Marca:</label>
+            <input id="marca" name="marca" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label for="modelo" class="form-label">Modelo:</label>
+            <input id="modelo" name="modelo" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label for="serie" class="form-label">Serie:</label>
+            <input id="serie" name="serie" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label for="descripcion_larga" class="form-label">Descripción Larga:</label>
+            <input id="descripcion_larga" name="descripcion_larga" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label for="descripcion_corta" class="form-label">Descripción Corta:</label>
+            <input id="descripcion_corta" name="descripcion_corta" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label for="proveedor" class="form-label">Proveedor:</label>
+            <input id="proveedor" name="proveedor" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label for="fecha_adquisicion" class="form-label">Fecha de Adquisición:</label>
+            <input id="fecha_adquisicion" type="date" name="fecha_adquisicion" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label for="garantia" class="form-label">Garantía:</label>
+            <input id="garantia" name="garantia" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label for="vigencia_garantia" class="form-label">Vigencia Garantía:</label>
+            <input id="vigencia_garantia" name="vigencia_garantia" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label for="ubicacion" class="form-label">Ubicación:</label>
+            <input id="ubicacion" name="ubicacion" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label for="encargado" class="form-label">Responsable (ID usuario):</label>
+            <select id="encargado" name="encargado" class="form-select" required>
+                <option value="" disabled selected>Selecciona responsable</option>
+                {% for user in users %}
+                <option value="{{ user.id_usuario }}">{{ user.id_usuario }} - {{ user.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
     <input type="hidden" name="estado" value="activo">
     <input type="hidden" name="causa_baja" value="">
