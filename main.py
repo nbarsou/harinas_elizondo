@@ -10,6 +10,8 @@ from flask_login import (
 )
 from functools import wraps
 from flask import abort
+from datetime import date
+
 
 # Bibliotecas para mandar certificados
 from xhtml2pdf import pisa  # falta en requirements
@@ -335,8 +337,15 @@ def register_inspection():
         flash("Inspección registrada correctamente.", "success")
         return redirect(url_for("list_inspections_route"))
 
-    return render_template("create_inspection.html")
-
+    today = date.today().isoformat()  # o como calcules la fecha por defecto
+    equipments = list_equipment()
+    users = list_users()
+    return render_template(
+    "create_inspection.html",
+    today=today,
+    equipments=equipments,
+    users=users
+    )
 
 # Listado de inspecciones
 # TODO: arreglar el query y como se registran
