@@ -24,7 +24,6 @@ dist/
 
 # Log files
 *.log
-*.json
 
 # Jupyter Notebook checkpoints (if you use notebooks)
 .ipynb_checkpoints/
