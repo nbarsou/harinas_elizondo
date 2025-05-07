@@ -185,7 +185,7 @@ def dashboard():
 # Registro de nuevos clientes
 @app.route("/clients/create", methods=["GET", "POST"])
 @login_required
-@role_required("Admin", "Equipo de ventas", "Gerencia de Control de Calidad", "Gerencia de laboratorio")
+@role_required("Admin", "Gerencia de Control de Calidad", "Gerencia de laboratorio")
 def register_client():
     if request.method == "POST":
         # Extrae los datos del formulario
@@ -231,7 +231,7 @@ def list_clients_route():
 # Edición de cliente existente
 @app.route("/clients/<int:id>/edit", methods=["POST"])
 @login_required
-@role_required("Admin", "Equipo de ventas", "Gerencia de Control de Calidad", "Gerencia de laboratorio")
+@role_required("Admin", "Gerencia de Control de Calidad", "Gerencia de laboratorio")
 def update_client_route(id):
     # Extrae datos y obtiene cliente original
     nombre = request.form["nombre"]
@@ -275,7 +275,7 @@ def update_client_route(id):
 # Baja lógica del cliente (sin borrarlo de la BD)
 @app.route("/clients/<int:id>/deactivate", methods=["POST"])
 @login_required
-@role_required("Admin", "Equipo de ventas", "Gerencia de Control de Calidad", "Gerencia de laboratorio")
+@role_required("Admin", "Gerencia de Control de Calidad", "Gerencia de laboratorio")
 def deactivate_client_route(id):
     motivo = request.form["motivo_baja"]
     try:
