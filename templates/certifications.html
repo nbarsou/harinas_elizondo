@@ -129,26 +129,33 @@
 
                 <!-- Cliente -->
                 <div class="col-md-4">
-                    <label class="form-label">ID Cliente</label>
-                    <input type="number" name="id_cliente" class="form-control" required>
+                    <label class="form-label">Cliente</label>
+                    <select name="id_cliente" class="form-select" required>
+                        <option value="">Seleccione cliente…</option>
+                        {% for cli in clientes %}
+                            <option value="{{ cli.id_cliente }}">
+                                [{{ cli.id_cliente }}] {{ cli.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
                 </div>
 
                 <!-- Secuencia -->
                 <div class="col-md-4">
                     <label class="form-label">Secuencia de inspección</label>
-                    <input type="text" name="secuencia_inspeccion" class="form-control" required>
+                    <input type="text" name="secuencia_inspeccion" class="form-control" placeholder="Ej. A, B, C" required>
                 </div>
 
                 <!-- Orden de compra -->
                 <div class="col-md-4">
                     <label class="form-label">Orden de compra</label>
-                    <input type="text" name="orden_compra" class="form-control">
+                    <input type="text" name="orden_compra" class="form-control" placeholder="Ej. OC-23456">
                 </div>
 
                 <!-- Cantidades -->
                 <div class="col-md-4">
                     <label class="form-label">Cantidad solicitada</label>
-                    <input type="number" step="any" name="cantidad_solicitada" class="form-control">
+                    <input type="number" step="any" name="cantidad_solicitada" class="form-control" placeholder="Ej. 1000">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Cantidad entregada</label>
@@ -158,7 +165,7 @@
                 <!-- Factura y fechas -->
                 <div class="col-md-4">
                     <label class="form-label">Número de factura</label>
-                    <input type="text" name="numero_factura" class="form-control">
+                    <input type="text" name="numero_factura" class="form-control" placeholder="Ej. FAC-78910">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Fecha de envío</label>
@@ -172,11 +179,16 @@
                 <!-- Comparación y desviaciones -->
                 <div class="col-md-6">
                     <label class="form-label">Comparación con referencias</label>
-                    <textarea name="compara_referencias" class="form-control" rows="3"></textarea>
+                    <textarea name="compara_referencias" class="form-control" rows="3"
+                    placeholder="Ej. Dentro de los parámetros establecidos según norma X."></textarea>                    
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Desviaciones</label>
-                    <textarea name="desviaciones" class="form-control" rows="3"></textarea>
+                    <label class="form-label">Desviaciones (divididas por comas ',') dejar vacío para N/A</label>
+                    <textarea name="desviaciones" class="form-control" rows="3"
+                    placeholder="Ej. humedad alta, ceniza fuera de rango"></textarea>
+                    <small id="desviaciones-count" class="form-text text-muted">
+                        Desviaciones detectadas: 0
+                    </small>
                 </div>
 
                 <!-- Correo -->
@@ -192,4 +204,22 @@
         </form>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const textarea = document.querySelector('textarea[name="desviaciones"]');
+      const countLabel = document.getElementById("desviaciones-count");
+      
+      if (textarea && countLabel) {
+        function updateCount() {
+          const val = textarea.value.trim();
+          const count = val ? val.split(',').filter(x => x.trim()).length : 0;
+          countLabel.textContent = `Desviaciones detectadas: ${count}`;
+        }
+        
+        // Asegurarse de que se actualice al cargar y con cada entrada
+        textarea.addEventListener("input", updateCount);
+        updateCount(); // Ejecutar inmediatamente para valores iniciales
+      }
+    });
+</script>
 {% endblock %}

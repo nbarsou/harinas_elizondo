@@ -65,6 +65,8 @@ from services.certificate_service import (
     create_certificate,
 )
 from services.mail_service import send_certificate
+from services import dashboard_service
+
 
 # Inicializa la aplicación Flask
 app = Flask(__name__)
@@ -166,16 +168,11 @@ def logout():
     return redirect(url_for("sign_in"))
 
 
-# Ruta principal (dashboard) después del login
-@app.route("/dashboard")
+@app.route("/dashboard", endpoint="dashboard")  # ← alias extra
 @login_required
-@role_required("Admin", "Gerencia de Control de Calidad", "Gerencia de laboratorio","Gerencia de Aseguramiento de Calidad","Gerentes de Plantas", "Director de Operaciones")
-def dashboard():
-    """
-    Vista del dashboard principal.
-    Muestra un resumen de la información relevante del sistema.
-    """
-    return render_template("dashboard.html")
+def dashboard_view():
+    dash = dashboard_service.generate_dashboard(current_user.id)
+    return render_template("dashboard.html", **dash)
 
 
 # -----------------------------------
@@ -478,8 +475,9 @@ def delete_certificate_route(id):
     return redirect(url_for("certifications"))  # Usa 'certifications' como me dijiste
 
 
+
 # Crear certificados
-@app.route("/certifications/create", methods=["POST"])
+@app.route("/certifications/create", methods=["GET", "POST"])
 def create_certificate_route():
 
     # 1. Leer datos del formulario
@@ -556,15 +554,21 @@ def create_certificate_route():
     return redirect(url_for("certifications"))
 
 
-# ---- Ver certificados ----
-@app.route("/certification")
-def certification():
-    certificados = list_certificates()
-    inspecciones = get_all_inspections()
-    return render_template(
-        "certifications.html", certificados=certificados, inspecciones=inspecciones
-    )
 
+
+
+@app.route("/certifications", methods=["GET"])
+@login_required
+def certifications():  # <--- CAMBIA ESTO de 'certification' a 'certifications'
+    certificados  = list_certificates()
+    inspecciones  = get_all_inspections()
+    clientes      = list_clients()
+    return render_template(
+        "certifications.html",
+        certificados=certificados,
+        inspecciones=inspecciones,
+        clientes=clientes
+    )
 
 # -----------------------------------
 # EQUIPOS DE LABORATORIO
