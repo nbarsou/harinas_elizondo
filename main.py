@@ -63,7 +63,9 @@ from services.certificate_service import (
     list_certificates,
     delete_certificate,
     create_certificate,
+    build_desviaciones,          # ← añade esto
 )
+
 from services.mail_service import send_certificate
 from services import dashboard_service
 
@@ -495,8 +497,10 @@ def create_certificate_route():
 
     # 2. Insertar en la base de datos
     try:
+        id_cli = int(form.get("id_cliente", 0))                 # ← NUEVO
+
         cert_id = create_certificate(
-            id_cliente=int(form.get("id_cliente", 0)),
+            id_cliente=id_cli,
             id_inspeccion=id_inspeccion,
             secuencia_inspeccion=form.get("secuencia_inspeccion", ""),
             orden_compra=form.get("orden_compra", ""),
@@ -507,7 +511,11 @@ def create_certificate_route():
             fecha_caducidad=form.get("fecha_caducidad", ""),
             resultados_analisis=inspeccion["parametros_analizados"],
             compara_referencias=form.get("compara_referencias", ""),
-            desviaciones=form.get("desviaciones", ""),
+            desviaciones=build_desviaciones(                     # ← CAMBIA ESTA LÍNEA
+                id_cli,
+                inspeccion["parametros_analizados"],
+                form.get("desviaciones", "")
+            ),
             destinatario_correo=form.get("destinatario_correo", ""),
         )
     except Exception as e:
@@ -554,21 +562,47 @@ def create_certificate_route():
     return redirect(url_for("certifications"))
 
 
-
-
-
-@app.route("/certifications", methods=["GET"])
+# -----------------------------  LISTAR / CREAR  CERTIFICADOS  -----------------------------
+@app.route("/certifications")
 @login_required
-def certifications():  # <--- CAMBIA ESTO de 'certification' a 'certifications'
-    certificados  = list_certificates()
-    inspecciones  = get_all_inspections()
-    clientes      = list_clients()
+def certifications():
+    certificados = list_certificates()          # tabla existente
+
+    # --- inspecciones sólo del usuario conectado ---------------------------
+    inspecciones = []
+    for row in get_all_inspections():
+        d = dict(row)                           # Row -> dict
+        lab_id = d.get("id_laboratorista") or d.get("ID_LABORATORISTA")
+        if lab_id == current_user.id:
+            inspecciones.append(d)
+
+    # --- dropdown de clientes ----------------------------------------------
+    clientes = list_clients()
+
+    # --- desviaciones generadas (si existen reglas) ------------------------
+    desviaciones_generadas = None
+    if inspecciones:
+        ins        = inspecciones[-1]           # la más reciente del usuario
+        parametros = ins.get("parametros_analizados") or ins.get("PARAMETROS_ANALIZADOS")
+        cliente_id = ins.get("id_cliente")            or ins.get("ID_CLIENTE")
+        if parametros and cliente_id:
+            desviaciones_generadas = build_desviaciones(
+                cliente_id,
+                parametros,
+                ""         # texto manual vacío en vista GET
+            )
+
+    # --- render ------------------------------------------------------------
     return render_template(
         "certifications.html",
         certificados=certificados,
         inspecciones=inspecciones,
-        clientes=clientes
+        clientes=clientes,
+        desviaciones_generadas=desviaciones_generadas
     )
+# -----------------------------------------------------------------------------------------
+
+
 
 # -----------------------------------
 # EQUIPOS DE LABORATORIO

@@ -182,14 +182,14 @@
                     <textarea name="compara_referencias" class="form-control" rows="3"
                     placeholder="Ej. Dentro de los parámetros establecidos según norma X."></textarea>                    
                 </div>
+                <!-- Comparación y desviaciones -->
                 <div class="col-md-6">
-                    <label class="form-label">Desviaciones (divididas por comas ',') dejar vacío para N/A</label>
+                    <label class="form-label">Desviaciones (divididas por comas ,)</label>
                     <textarea name="desviaciones" class="form-control" rows="3"
-                    placeholder="Ej. humedad alta, ceniza fuera de rango"></textarea>
-                    <small id="desviaciones-count" class="form-text text-muted">
-                        Desviaciones detectadas: 0
-                    </small>
+                            placeholder="Ej. humedad alta, ceniza fuera de rango"
+                            {% if desviaciones_generadas %}readonly{% endif %}>{{ desviaciones_generadas|default('', true) }}</textarea>
                 </div>
+
 
                 <!-- Correo -->
                 <div class="col-md-6">
