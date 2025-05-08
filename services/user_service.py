@@ -123,7 +123,7 @@ def authenticate_user(mail, contrasena):
     with db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT * FROM usuario WHERE mail = ? AND contrasena = ?",
+            "SELECT * FROM USUARIO WHERE mail = ? AND contrasena = ?",
             (mail, contrasena),
         )
         row = cursor.fetchone()
