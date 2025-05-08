@@ -46,72 +46,88 @@ def _bar_uri(counts: Dict[str, int], title: str) -> str:
 
     return _fig_to_uri(fig)
 
-# -----------------------------------------------------------------------------
-# helpers
-# -----------------------------------------------------------------------------
+# helpers -------------------------------------------------------------
+def _is_manager(role: str) -> bool:
+    return role in {"Admin",
+                    "Gerencia de laboratorio",
+                    "Gerencia de Control de Calidad"}
 
-def count_my_inspecciones(conn, user_id: int) -> int:
-    """Total de inspecciones del laboratorista conectado."""
+def count_inspecciones(conn, *, user_id: int, is_manager: bool) -> int:
     sql = """
         SELECT COUNT(*) AS total
         FROM   INSPECCION
-        WHERE  id_laboratorista = ?
-    """
-    return conn.execute(sql, (user_id,)).fetchone()["total"]
+        {where}
+    """.format(where="" if is_manager else "WHERE id_laboratorista = ?")
+    params = () if is_manager else (user_id,)
+    return conn.execute(sql, params).fetchone()["total"]
 
-
-def count_my_certificados(conn, user_id: int) -> int:
-    """
-    Total de certificados emitidos por el laboratorista conectado.
-    Se enlaza CERTIFICADO_CALIDAD → INSPECCION para verificar al autor.
-    """
+def count_certificados(conn, *, user_id: int, is_manager: bool) -> int:
     sql = """
         SELECT COUNT(*) AS total
-        FROM   CERTIFICADO_CALIDAD AS c
-        JOIN   INSPECCION          AS i ON i.id_inspeccion = c.id_inspeccion
-        WHERE  i.id_laboratorista = ?
-    """
-    return conn.execute(sql, (user_id,)).fetchone()["total"]
+        FROM   CERTIFICADO_CALIDAD  AS c
+        JOIN   INSPECCION           AS i USING (id_inspeccion)
+        {where}
+    """.format(where="" if is_manager else "WHERE i.id_laboratorista = ?")
+    params = () if is_manager else (user_id,)
+    return conn.execute(sql, params).fetchone()["total"]
 
-
-def counts_by_dev(conn, user_id: int, months: int) -> dict[str, int]:
+# --------------------------------------------------------------------
+def counts_by_dev(conn, *, user_id: int, is_manager: bool, months: int) -> dict[str, int]:
     """
-    Agrupa certificados del laboratorista por nº de desviaciones
-    dentro del intervalo solicitado (meses atrás).
+    Devuelve cuántos certificados tienen 3+, 2, 1 ó 0 desviaciones
+    en los últimos *months* meses.  Si *is_manager* es False, filtra
+    además por el laboratorista.
     """
     sql = """
         SELECT c.desviaciones
         FROM   CERTIFICADO_CALIDAD AS c
-        JOIN   INSPECCION          AS i ON i.id_inspeccion = c.id_inspeccion
-        WHERE  i.id_laboratorista = ?
-          AND  c.fecha_envio >= date('now', ?)
+        JOIN   INSPECCION         AS i USING (id_inspeccion)
+        WHERE  c.fecha_envio >= date('now', ?)
     """
-    # ?2 = "-3 months", "-6 months", …
-    df = pd.read_sql_query(sql, conn, params=(user_id, f"-{months} months"))
-    df["dev_int"] = df["desviaciones"].apply(lambda t: len([x for x in (t or "").split(",") if x.strip()]))
+    params: list[Any] = [f"-{months} months"]
+
+    if not is_manager:
+        sql += " AND i.id_laboratorista = ?"
+        params.append(user_id)
+
+    df = pd.read_sql_query(sql, conn, params=params)
+
+    df["dev_int"] = df["desviaciones"].apply(
+        lambda t: len([x for x in (t or "").split(",") if x.strip()])
+    )
+
     return {
         "3+": (df["dev_int"] >= 3).sum(),
         "2":  (df["dev_int"] == 2).sum(),
         "1":  (df["dev_int"] == 1).sum(),
-        "Total": len(df)
+        "Total": len(df),
     }
+# --------------------------------------------------------------------
 
-# -----------------------------------------------------------------------------
-# API público
-# -----------------------------------------------------------------------------
 
-def generate_dashboard(user_id: int) -> dict:
+# API público ---------------------------------------------------------
+def generate_dashboard(user) -> dict:
     """
-    Devuelve el diccionario que consume `dashboard.html`
-    con la información **sólo del usuario conectado**.
+    Devuelve la info del dashboard ajustada a los permisos del *user*.
+    - Laboratorista => sólo sus datos
+    - Roles de supervisión => datos globales
     """
+    is_manager = _is_manager(user.rol)          # type: ignore[attr-defined]
     with db_connection() as conn:
-        result: dict[str, Any] = {}
-        # conteos principales
-        result["inspecciones_total"] = count_my_inspecciones(conn, user_id)
-        result["certificados_total"] = count_my_certificados(conn, user_id)
-        # gráficas de desviaciones
+        result = {
+            "inspecciones_total": count_inspecciones(conn,
+                                                     user_id=user.id,
+                                                     is_manager=is_manager),
+            "certificados_total": count_certificados(conn,
+                                                     user_id=user.id,
+                                                     is_manager=is_manager),
+        }
         for m in (3, 6, 12):
-            counts = counts_by_dev(conn, user_id, m)
-            result[f"bar{m}_uri"] = _bar_uri(counts, f"Desviaciones en últimos {m} meses")
+            result[f"bar{m}_uri"] = _bar_uri(
+                counts_by_dev(conn,
+                              user_id=user.id,
+                              is_manager=is_manager,
+                              months=m),
+                f"Desviaciones en últimos {m} meses"
+            )
         return result
