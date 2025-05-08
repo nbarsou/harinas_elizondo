@@ -31,7 +31,7 @@
                     <th>Secuencia</th>
                     <th>Tipo</th>
                     <th>Fecha</th>
-                    <th>Equipo (ID)</th>
+                    <th>Equipo</th>
                 </tr>
             </thead>
             <tbody>
@@ -44,7 +44,7 @@
                     <td>{{ ins.secuencia }}</td>
                     <td>{{ ins.tipo_inspeccion }}</td>
                     <td>{{ ins.fecha }}</td>
-                    <td>{{ ins.id_equipo }}</td>
+                    <td>{{ ins.equipo_modelo}} - {{ins.equipo_serie}}</td>
                 </tr>
                 {% endfor %}
             </tbody>
