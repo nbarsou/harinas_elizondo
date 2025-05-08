@@ -12,8 +12,6 @@
             <li><hr class="dropdown-divider"></li>
             <li><button class="dropdown-item" id="btn-edit" disabled>Editar</button></li>
             <li><button class="dropdown-item" id="btn-delete" disabled>Eliminar</button></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><button class="dropdown-item" id="btn-back">Regresar a Clientes</button></li>
         </ul>
     </div>
 </div>
@@ -50,6 +48,10 @@
     Este cliente aún no tiene direcciones registradas.
 </div>
 {% endif %}
+<!-- Botón “Regresar” movido abajo de todo y alineado a la izquierda -->
+<div class="d-flex justify-content-start mt-3">
+    <button class="btn btn-secondary" id="btn-back">← Regresar a Clientes</button>
+</div>
 
 <!-- Modal Alta / Edición -->
 <div class="modal fade" id="addressModal" tabindex="-1" aria-hidden="true">

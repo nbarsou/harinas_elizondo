@@ -12,21 +12,42 @@ import os
 import json
 
 
-def _build_config_json(use_custom: bool, form: dict, client_id: int) -> str:
-    params = {}
+def build_config_json(use_custom: bool, form: dict, client_id: int) -> str:
+    # Si no usa parámetros a la carta, cargo los defaults (ya vienen anidados)
     if not use_custom:
         path_default = os.path.join(
             os.path.dirname(__file__), "parametros_default.json"
         )
         with open(path_default, "r", encoding="utf-8") as f:
             params = json.load(f)
+
+    # Si usa parámetros personalizados, construyo dos dicts separados
     else:
+        alveo = {}
+        fari = {}
+
         for key, val in form.items():
-            if key.startswith(("alveo_", "fari_")) and val.strip():
-                equipo, param, bound = key.split("_", 2)
-                k = f"{equipo}_{param}"
-                params.setdefault(k, {})[bound] = float(val)
-    params["id_cliente"] = client_id
+            val = val.strip()
+            if not val:
+                continue
+
+            parts = key.split("_")
+            equipo = parts[0]  # "alveo" o "fari"
+            bound = parts[-1]  # "inf" o "sup"
+            # todo lo que queda en medio es el nombre del parámetro
+            param = "_".join(parts[1:-1])
+
+            if equipo == "alveo":
+                # ejemplo: param == "W" o "relacion_P_L"
+                alveo.setdefault(param, {})[bound] = float(val)
+            elif equipo == "fari":
+                # ejemplo: param == "absorcion_de_agua"
+                fari.setdefault(param, {})[bound] = float(val)
+
+        params = {"alveografo": alveo, "farinografo": fari}
+
+    # Siempre incluyo el id del cliente
+    params["id_cliente"] = client_id  # type: ignore
     return json.dumps(params, ensure_ascii=False)
 
 
@@ -89,7 +110,7 @@ def create_client(
             return None
 
         # Construir y actualizar JSON con ID incluido
-        configuracion_json = _build_config_json(use_custom_params, form_data, client_id)
+        configuracion_json = build_config_json(use_custom_params, form_data, client_id)
         cursor.execute(
             "UPDATE CLIENTE SET configuracion_json = ? WHERE id_cliente = ?",
             (configuracion_json, client_id),
@@ -236,103 +257,3 @@ def list_clients() -> list:
         rows = cursor.fetchall()
 
     return [dict(row) for row in rows]
-
-
-# ----------------------------------------------
-# Funciones para gestionar archivos de configuración
-# ----------------------------------------------
-
-# Directorio donde se encuentra este archivo (services)
-CONFIG_DIR = os.path.dirname(__file__)
-
-# Ruta completa al archivo de parámetros por defecto
-DEFAULT_CONFIG_FILE = os.path.join(CONFIG_DIR, "parametros_default.json")
-
-
-def create_default_config_file():
-    """
-    Crea el archivo parametros_default.json con los parámetros por defecto.
-    Esta función se debe llamar una sola vez al iniciar el programa para crear el archivo default.
-
-    Parámetros:
-      - client_id (int): ID del cliente.
-      - config (dict): Diccionario con los parámetros de configuración del cliente.
-        Se espera que siga el siguiente formato:
-           {
-             "farinografo": {
-                "absorcion_de_agua": {"inf": <valor>, "sup": <valor>},
-                "tiempo_de_desarrollo": {"inf": <valor>, "sup": <valor>},
-                "estabilidad": {"inf": <valor>, "sup": <valor>},
-                "indice_de_tolerancia": {"inf": <valor>, "sup": <valor>}
-             },
-             "alveografo": {
-                "W": {"inf": <valor>, "sup": <valor>},
-                "P": {"inf": <valor>, "sup": <valor>},
-                "L": {"inf": <valor>, "sup": <valor>},
-                "relacion_P_L": {"inf": <valor>, "sup": <valor>}
-             }
-           }
-    """
-    default_params = {
-        "farinografo": {
-            "absorcion_de_agua": {"inf": 55, "sup": 65},
-            "tiempo_de_desarrollo": {"inf": 1.5, "sup": 3.0},
-            "estabilidad": {"inf": 5, "sup": 10},
-            "indice_de_tolerancia": {"inf": 70, "sup": 110},
-        },
-        "alveografo": {
-            "W": {"inf": 180, "sup": 350},
-            "P": {"inf": 70, "sup": 130},
-            "L": {"inf": 90, "sup": 140},
-            "relacion_P_L": {"inf": 0.5, "sup": 1.0},
-        },
-    }
-    with open(DEFAULT_CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(default_params, f, indent=4)
-
-
-def save_client_specific_config(client_id: int, config: dict):
-    """
-    Guarda la configuración personalizada para un cliente en un archivo JSON.
-
-    Parámetros:
-      - client_id (int): ID del cliente.
-      - config (dict): Diccionario con los parámetros de configuración del cliente.
-        Se espera que siga el siguiente formato:
-           {
-             "farinografo": {
-                "absorcion_de_agua": {"inf": <valor>, "sup": <valor>},
-                "tiempo_de_desarrollo": {"inf": <valor>, "sup": <valor>},
-                "estabilidad": {"inf": <valor>, "sup": <valor>},
-                "indice_de_tolerancia": {"inf": <valor>, "sup": <valor>}
-             },
-             "alveografo": {
-                "W": {"inf": <valor>, "sup": <valor>},
-                "P": {"inf": <valor>, "sup": <valor>},
-                "L": {"inf": <valor>, "sup": <valor>},
-                "relacion_P_L": {"inf": <valor>, "sup": <valor>}
-             }
-           }
-
-    Se crea o sobrescribe el archivo {id_cliente}.json en el mismo directorio.
-    """
-
-    file_path = os.path.join(CONFIG_DIR, f"{client_id}.json")
-    with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(config, f, indent=4)
-
-    """
-    Referencias parametros (tomar 2 de las siguientes) 
-    American Association of Cereal Chemists International. (2010). AACC International Approved Methods of Analysis. AACC International. Recuperado de http://www.aaccnet.org/
-
-    Corsini, D., & Gujral, H. S. (2005). Calidad y evaluación de la harina de trigo. Journal of Cereal Science, 41(2), 128–137.
-
-    Rodríguez, F. G., Martínez, A., & López, G. (2012). Normas internacionales para la calidad de la harina de trigo. Revista de Tecnología de Cereales, 15(3), 45–57.
-    
-    Molinos del Norte. (2020). Ficha técnica: Análisis reológico de la harina de trigo. Recuperado de http://www.molinosdelnorte.com/analisis_reologico
-
-    Organización de las Naciones Unidas para la Agricultura y la Alimentación. (2019). Normas internacionales para la harina de trigo: Métodos reológicos. FAO. Recuperado de http://www.fao.org/standards
-
-    Pérez, M. (2021). Evaluación reológica de la harina de trigo: Un estudio aplicado [Tesis de maestría, Universidad Nacional Agraria La Molina]. Repositorio Digital UNALM.
-    
-    """

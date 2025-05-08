@@ -43,6 +43,7 @@ def list_inspections():
     with db_connection() as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
+
         cursor.execute(
             """
             SELECT 
@@ -52,28 +53,17 @@ def list_inspections():
                 i.tipo_inspeccion,
                 i.fecha,
                 e.descripcion_corta AS equipo_nombre,
+                e.modelo AS equipo_modelo, 
+                e.serie AS equipo_serie,
                 i.id_laboratorista
-            FROM inspeccion i
-            JOIN equipo_laboratorio e ON i.id_equipo = e.id_equipo
+            FROM INSPECCION i
+            JOIN EQUIPO_LABORATORIO e
+              ON i.id_equipo = e.id_equipo
             ORDER BY i.id_inspeccion DESC
-            """
+        """
         )
-        cursor.execute(
-            """
-            SELECT
-                i.id_inspeccion,
-                i.numero_lote,
-                i.secuencia,
-                i.tipo_inspeccion,
-                i.fecha,
-                i.id_equipo,
-                i.id_laboratorista
-                FROM inspeccion i
-                ORDER BY i.id_inspeccion DESC
-                """
-             )
-
         rows = cursor.fetchall()
+
     return [dict(row) for row in rows]
 
 
@@ -174,13 +164,16 @@ def delete_inspection(id_inspeccion: int) -> int:
 
     return affected_rows
 
+
 def get_all_inspections() -> list[dict]:
     with db_connection() as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id_inspeccion, numero_lote, secuencia
             FROM INSPECCION
             ORDER BY id_inspeccion DESC
-        """)
+        """
+        )
         return cursor.fetchall()

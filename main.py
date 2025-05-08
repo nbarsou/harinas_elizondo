@@ -36,6 +36,7 @@ from services.client_service import (
     update_client,
     deactivate_client,
     delete_client,
+    build_config_json,
 )
 from services.address_service import (
     list_addresses,
@@ -231,7 +232,7 @@ def list_clients_route():
 @login_required
 @role_required("Admin", "Gerencia de Control de Calidad", "Gerencia de laboratorio")
 def update_client_route(id):
-    # Extrae datos y obtiene cliente original
+    # 1) Leer datos básicos del formulario
     nombre = request.form["nombre"]
     rfc = request.form["rfc"]
     nombre_contacto = request.form["nombre_contacto"]
@@ -239,28 +240,35 @@ def update_client_route(id):
     requiere_cert = bool(int(request.form["requiere_certificado"]))
     activo = bool(int(request.form["activo"]))
 
+    # 2) Leer si usa parámetros particulares (internacionales vs particulares)
+    #    Asumimos que en el form existe <select name="use_custom_params"> con '0' o '1'
+    use_custom_params = bool(int(request.form.get("use_custom_params", "0")))
+
+    # 3) Mantener motivo de baja del registro original
     original = get_client(id)
     if not original:
         flash("Cliente no encontrado", "danger")
         return redirect(url_for("list_clients_route"))
-
     motivo_baja = original.get("motivo_baja")
-    configuracion_json = original.get("configuracion_json") or ""
 
-    # Actualiza cliente
+    # 4) Construir el JSON de configuración con tu helper
+    #    Pasa el flag de use_custom, todo el form y el id
+    configuracion_json = build_config_json(use_custom_params, request.form, id)
+
+    # 5) Llamar a la función de servicio update_client
     try:
-        updated = update_client(
-            id,
-            nombre,
-            rfc,
-            nombre_contacto,
-            correo_contacto,
-            requiere_cert,
-            activo,
-            motivo_baja,
-            configuracion_json,
+        filas = update_client(
+            client_id=id,
+            nombre=nombre,
+            rfc=rfc,
+            nombre_contacto=nombre_contacto,
+            correo_contacto=correo_contacto,
+            requiere_certificado=requiere_cert,
+            activo=activo,
+            motivo_baja=motivo_baja,
+            configuracion_json=configuracion_json,
         )
-        if updated:
+        if filas:
             flash("Cliente actualizado correctamente", "success")
         else:
             flash("No se realizaron cambios", "info")
@@ -303,6 +311,7 @@ def delete_client_route(client_id):
     return redirect(
         url_for("list_clients_route")
     )  # Ajusta con tu nombre real de la vista
+
 
 # -----------------------------------
 # DIRECCIONES DE CLIENTE
@@ -378,6 +387,7 @@ def delete_address_route(id: int, id_dir: int):
         flash(f"Error al eliminar dirección: {e}", "danger")
     return redirect(url_for("list_addresses_route", id=id))
 
+
 # -----------------------------------
 # INSPECCIONES
 # -----------------------------------
@@ -419,14 +429,11 @@ def register_inspection():
     equipments = list_equipment()
     users = list_users()
     return render_template(
-    "create_inspection.html",
-    today=today,
-    equipments=equipments,
-    users=users
+        "create_inspection.html", today=today, equipments=equipments, users=users
     )
 
+
 # Listado de inspecciones
-# TODO: arreglar el query y como se registran
 @app.route("/inspections")
 @login_required
 def list_inspections_route():
@@ -468,6 +475,7 @@ def delete_inspection_route(id):
 # CERTIFICADOS
 # -----------------------------------
 # Eliminación de certificados
+@login_required
 @app.route("/certificates/delete/<int:id>", methods=["POST"])
 def delete_certificate_route(id):
     from services.certificate_service import delete_certificate
@@ -476,8 +484,8 @@ def delete_certificate_route(id):
     return redirect(url_for("certifications"))  # Usa 'certifications' como me dijiste
 
 
-
 # Crear certificados
+@login_required
 @app.route("/certifications/create", methods=["GET", "POST"])
 def create_certificate_route():
 
@@ -560,7 +568,6 @@ def create_certificate_route():
 
     return redirect(url_for("certifications"))
 
-
 # -----------------------------  LISTAR / CREAR  CERTIFICADOS  -----------------------------
 @app.route("/certifications", methods=["GET"])
 @login_required
@@ -613,6 +620,7 @@ def certifications():
 
 
 
+
 # -----------------------------------
 # EQUIPOS DE LABORATORIO
 # -----------------------------------
@@ -645,7 +653,7 @@ def register_equipment():
             return redirect(url_for("list_equipment_route"))
         except Exception as e:
             flash(f"Error: {e}", "danger")
-    users = list_users()  
+    users = list_users()
     return render_template("create_equipment.html", users=users)
 
 
@@ -733,7 +741,14 @@ def delete_equipment_route(id):
 # Registro de nuevo usuario
 @app.route("/users/create", methods=["GET", "POST"])
 @login_required
-@role_required("Admin", "Gerencia de Control de Calidad", "Gerencia de laboratorio","Gerencia de Aseguramiento de Calidad","Gerentes de Plantas", "Director de Operaciones")
+@role_required(
+    "Admin",
+    "Gerencia de Control de Calidad",
+    "Gerencia de laboratorio",
+    "Gerencia de Aseguramiento de Calidad",
+    "Gerentes de Plantas",
+    "Director de Operaciones",
+)
 def register_user():
     if request.method == "POST":
         nombre = request.form["nombre"]
@@ -763,7 +778,7 @@ def list_users_route():
 # Actualización de usuario
 @app.route("/usuarios/update/<int:user_id>", methods=["POST"])
 @login_required
-@role_required("Admin","Gerencia de Control de Calidad", "Gerencia de laboratorio")
+@role_required("Admin", "Gerencia de Control de Calidad", "Gerencia de laboratorio")
 def update_user_route(user_id):
     try:
         # Recoger datos del formulario
