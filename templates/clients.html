@@ -58,61 +58,137 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         let selectedId = null;
-        let cliente = null;
-        const rows = document.querySelectorAll('.selectable-row');
-        const editBtn = document.getElementById('btn-edit');
-        const viewBtn = document.getElementById('btn-view');
+        let cliente    = null;
+        const rows        = document.querySelectorAll('.selectable-row');
+        const editBtn     = document.getElementById('btn-edit');
+        const viewBtn     = document.getElementById('btn-view');
         const deactivateBtn = document.getElementById('btn-deactivate');
-        const deleteBtn = document.getElementById('btn-delete');
-        const addressesBtn  = document.getElementById('btn-addresses');   // NUEVO
+        const deleteBtn     = document.getElementById('btn-delete');
+        const addressesBtn  = document.getElementById('btn-addresses');
 
+        // 1) PREPARAR lógica del modal de edición
+        const editModalEl = document.getElementById('editModal');
+        const reqModal    = editModalEl.querySelector('#reqCertModal');
+        const togModal    = editModalEl.querySelector('#paramsToggleModal');
+        const useModal    = editModalEl.querySelector('#useCustomParamsModal');
+        const secModal    = editModalEl.querySelector('#customParamsModal');
+
+        // Cuando cambie “¿Requiere certificado?”
+        reqModal.addEventListener('change', () => {
+            const show = reqModal.value === '1';
+            togModal.classList.toggle('d-none', !show);
+            if (!show) secModal.classList.add('d-none');
+        });
+        // Cuando cambie “Internacionales / Particulares”
+        useModal.addEventListener('change', () => {
+            secModal.classList.toggle('d-none', useModal.value !== '1');
+        });
+
+        // 2) CLICK en cada fila seleccionable
         rows.forEach(row => {
             row.addEventListener('click', () => {
-                // Quitar selección anterior
                 rows.forEach(r => r.classList.remove('table-primary'));
                 row.classList.add('table-primary');
-                // Guardar el ID y habilitar botones
                 selectedId = row.dataset.id;
-                [editBtn, viewBtn, deactivateBtn, deleteBtn, addressesBtn].forEach(btn => btn.disabled = false);
-                const data = document.querySelector(`tr[data-id="${selectedId}"]`)
-                cliente = JSON.parse(row.dataset.cliente)
+                [editBtn, viewBtn, deactivateBtn, deleteBtn, addressesBtn]
+                  .forEach(btn => btn.disabled = false);
+                cliente = JSON.parse(row.dataset.cliente);
             });
         });
-        // Abrir los modales correspondientes al ID seleccionado
+
+        // 3) BOTÓN EDITAR
         editBtn.onclick = () => {
-            const modal = document.getElementById('editModal');
-            const form = modal.querySelector('#editForm');
-            // Actualizar action dinámico
+            const form = editModalEl.querySelector('#editForm');
+            // acción dinámica
             form.action = `/clients/update/${cliente.id_cliente}`;
-            // Rellenar inputs
-            form.querySelector('input[name="nombre"]').value = cliente.nombre || '';
-            form.querySelector('input[name="rfc"]').value = cliente.rfc || '';
-            form.querySelector('input[name="nombre_contacto"]').value = cliente.nombre_contacto || '';
-            form.querySelector('input[name="correo_contacto"]').value = cliente.correo_contacto || '';
-            form.querySelector('input[name="activo"]').value = cliente.activo ? 1 : 0;
-            // Selección de certificado
-            const selectCert = form.querySelector('select[name="requiere_certificado"]');
-            if (selectCert) selectCert.value = cliente.requiere_certificado ? '1' : '0';
-            // Actualizar título
-            modal.querySelector('.modal-title').textContent = `Editar Cliente - ${cliente.nombre}`;
-            // Mostrar modal
-            new bootstrap.Modal(modal).show();
+            // campos básicos
+            form.querySelector('input[name="nombre"]').value            = cliente.nombre || '';
+            form.querySelector('input[name="rfc"]').value               = cliente.rfc || '';
+            form.querySelector('input[name="nombre_contacto"]').value   = cliente.nombre_contacto || '';
+            form.querySelector('input[name="correo_contacto"]').value   = cliente.correo_contacto || '';
+            form.querySelector('input[name="activo"]').value           = cliente.activo ? '1' : '0';
+
+            // 3.1) Requiere certificado?
+            reqModal.value = cliente.requiere_certificado ? '1' : '0';
+            reqModal.dispatchEvent(new Event('change'));
+
+            // 3.2) ¿Internacionales o Particulares?
+            // asumimos que el API devuelve cliente.use_custom_params (bool)
+            useModal.value = cliente.use_custom_params ? '1' : '0';
+            useModal.dispatchEvent(new Event('change'));
+
+            // 3.3) Rellenar rangos guardados si existen
+            let cfg = {};
+            try { cfg = JSON.parse(cliente.configuracion_json || '{}'); } catch(e){ console.warn(e); }
+            Object.keys(cfg).forEach(key => {
+                // por cada propiedad alveo_W_inf, fari_indice_de_tolerancia_sup, etc.
+                const inp = form.querySelector(`[name="${key}"]`);
+                if (inp) inp.value = cfg[key];
+            });
+
+            // título y mostrar
+            editModalEl.querySelector('.modal-title')
+                       .textContent = `Editar Cliente - ${cliente.nombre}`;
+            new bootstrap.Modal(editModalEl).show();
         };
+
+        // 4) BOTÓN VER
         viewBtn.onclick = () => {
-            const row = document.querySelector(`tr[data-id="${selectedId}"]`);
-            const cliente = JSON.parse(row.dataset.cliente);
-            const modal = document.getElementById(`viewModal`);
-            modal.querySelector('.modal-title').textContent = `Información Cliente - ${cliente.nombre}`;
-            document.getElementById('view-id').textContent = cliente.id_cliente || '-';
-            document.getElementById('view-nombre').textContent = cliente.nombre || '-';
-            document.getElementById('view-rfc').textContent = cliente.rfc || '-';
-            document.getElementById('view-contacto').textContent = cliente.nombre_contacto || '-';
-            document.getElementById('view-email').textContent = cliente.correo_contacto || '-';
-            document.getElementById('view-activo').textContent = cliente.activo ? 'Sí' : 'No';
-            document.getElementById('view-certificado').textContent = !cliente.requiere_certificado ? 'No requiere certificado' :
-                cliente.configuracion_json?.includes('"alveografo"') ? 'Parámetros internacionales (rangos estándar)' :
-                'Parámetros personalizados';
-            document.getElementById('view-baja').textContent = cliente.motivo_baja || '-';
+            const modal = document.getElementById('viewModal');
+            modal.querySelector('.modal-title')
+                 .textContent = `Información Cliente - ${cliente.nombre}`;
+
+            // campos básicos
+            modal.querySelector('#view-id').textContent        = cliente.id_cliente || '-';
+            modal.querySelector('#view-nombre').textContent    = cliente.nombre || '-';
+            modal.querySelector('#view-rfc').textContent       = cliente.rfc || '-';
+            modal.querySelector('#view-contacto').textContent  = cliente.nombre_contacto || '-';
+            modal.querySelector('#view-email').textContent     = cliente.correo_contacto || '-';
+            modal.querySelector('#view-activo').textContent    = cliente.activo ? 'Sí' : 'No';
+
+            // certificado / parámetros
+            const certDd = modal.querySelector('#view-certificado');
+            const paramsDd = modal.querySelector('#view-params-detail');
+
+            if (!cliente.requiere_certificado) {
+                certDd.textContent   = 'No requiere certificado';
+                paramsDd.textContent = '-';
+            } else {
+                // tiene certificado
+                if (cliente.use_custom_params) {
+                    certDd.textContent = 'Parámetros personalizados';
+                    // generar tabla de rangos
+                    let cfg = {};
+                    try { cfg = JSON.parse(cliente.configuracion_json || '{}'); } catch(e){}
+                    let html = '<table class="table table-sm mb-0"><thead>'
+                             + '<tr><th>Parámetro</th><th>Inf</th><th>Sup</th></tr>'
+                             + '</thead><tbody>';
+                    // alveógrafo
+                    ['W','P','L','relacion_P_L'].forEach(p => {
+                      html += `<tr>
+                                 <td>Alveo ${p}</td>
+                                 <td>${cfg['alveo_'+p+'_inf']||'-'}</td>
+                                 <td>${cfg['alveo_'+p+'_sup']||'-'}</td>
+                               </tr>`;
+                    });
+                    // farinógrafo
+                    ['absorcion_de_agua','tiempo_de_desarrollo','estabilidad','indice_de_tolerancia']
+                    .forEach(p => {
+                      const label = p.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase());
+                      html += `<tr>
+                                 <td>Fari ${label}</td>
+                                 <td>${cfg['fari_'+p+'_inf']||'-'}</td>
+                                 <td>${cfg['fari_'+p+'_sup']||'-'}</td>
+                               </tr>`;
+                    });
+                    html += '</tbody></table>';
+                    paramsDd.innerHTML = html;
+                } else {
+                    certDd.textContent   = 'Parámetros internacionales (rangos estándar)';
+                    paramsDd.textContent = '-';
+                }
+            }
+
             new bootstrap.Modal(modal).show();
         };
         deactivateBtn.onclick = () => {
@@ -152,55 +228,91 @@
 </script>
 <!-- Edit Modal -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form id="editForm" method="POST">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editLabel">Editar Cliente</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Nombre del Cliente</label>
-                            <input type="text" name="nombre" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">RFC</label>
-                            <input type="text" name="rfc" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Nombre de Contacto</label>
-                            <input type="text" name="nombre_contacto" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Correo de Contacto</label>
-                            <input type="email" name="correo_contacto" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Activo</label>
-                            <input type="hidden" name="activo">
-                            <select class="form-select" disabled>
-                                <option value="1">Sí</option>
-                                <option value="0">No</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">¿Requiere certificado?</label>
-                            <select name="requiere_certificado" class="form-select">
-                                <option value="0">No</option>
-                                <option value="1">Sí</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                </div>
-            </form>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="editForm" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editLabel">Editar Cliente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Nombre del Cliente</label>
+                <input type="text" name="nombre" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">RFC</label>
+                <input type="text" name="rfc" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Nombre de Contacto</label>
+                <input type="text" name="nombre_contacto" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Correo de Contacto</label>
+                <input type="email" name="correo_contacto" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Activo</label>
+                <input type="hidden" name="activo">
+                <select class="form-select" disabled>
+                    <option value="1">Sí</option>
+                    <option value="0">No</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">¿Requiere certificado?</label>
+              <select name="requiere_certificado" class="form-select" id="reqCertModal">
+                <option value="0">No</option>
+                <option value="1">Sí</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- ► Toggle internacional / particular -->
+          <div id="paramsToggleModal" class="mt-4 d-none">
+            <label class="form-label">Valores de referencia:</label>
+            <select id="useCustomParamsModal" name="use_custom_params" class="form-select">
+              <option value="0">Internacionales (default)</option>
+              <option value="1">Particulares</option>
+            </select>
+          </div>
+
+          <!-- ► Parámetros particulares -->
+          <div id="customParamsModal" class="mt-4 p-3 border rounded d-none">
+            <h5 class="mb-3">Parámetros de equipos (límite inferior / superior)</h5>
+            <!-- Alveógrafo -->
+            <h6>Alveógrafo</h6>
+            <div class="row g-3 mb-3">
+              {% for p in ['W','P','L','relacion_P_L'] %}
+              <div class="col-md-3">
+                <label class="form-label">{{ p }}</label>
+                <input type="number" step="any" name="alveo_{{ p }}_inf" class="form-control" placeholder="inf">
+                <input type="number" step="any" name="alveo_{{ p }}_sup" class="form-control mt-1" placeholder="sup">
+              </div>
+              {% endfor %}
+            </div>
+            <!-- Farinógrafo -->
+            <h6>Farinógrafo</h6>
+            <div class="row g-3">
+              {% for p in ['absorcion_de_agua','tiempo_de_desarrollo','estabilidad','indice_de_tolerancia'] %}
+              <div class="col-md-3">
+                <label class="form-label">{{ p.replace('_',' ').title() }}</label>
+                <input type="number" step="any" name="fari_{{ p }}_inf" class="form-control" placeholder="inf">
+                <input type="number" step="any" name="fari_{{ p }}_sup" class="form-control mt-1" placeholder="sup">
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 <!-- Deactivate Modal -->
 <div class="modal fade" id="deactivateModal" tabindex="-1" aria-labelledby="deactivateLabel" aria-hidden="true">
@@ -251,6 +363,10 @@
                     <dd class="col-sm-9" id="view-certificado"></dd>
                     <dt class="col-sm-3">Motivo Baja</dt>
                     <dd class="col-sm-9" id="view-baja"></dd>
+                    <dt class="col-sm-3">Certificado</dt>
+                    <dd class="col-sm-9" id="view-certificado"></dd>
+                    <dt class="col-sm-3">Parámetros</dt>
+                    <dd class="col-sm-9" id="view-params-detail"></dd>
                 </dl>
             </div>
             <div class="modal-footer">
