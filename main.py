@@ -173,9 +173,8 @@ def logout():
 @app.route("/dashboard", endpoint="dashboard")  # ← alias extra
 @login_required
 def dashboard_view():
-    dash = dashboard_service.generate_dashboard(current_user.id)
+    dash = dashboard_service.generate_dashboard(current_user)  # ✅ pasamos el objeto user
     return render_template("dashboard.html", **dash)
-
 
 # -----------------------------------
 # CLIENTES
@@ -563,36 +562,46 @@ def create_certificate_route():
 
 
 # -----------------------------  LISTAR / CREAR  CERTIFICADOS  -----------------------------
-@app.route("/certifications")
+@app.route("/certifications", methods=["GET"])
 @login_required
 def certifications():
-    certificados = list_certificates()          # tabla existente
+    # 1) Tablas base -------------------------------------------------------
+    certificados = list_certificates()              # lista completa
+    inspecciones = [dict(r) for r in get_all_inspections()]  # Row → dict
+    clientes     = list_clients()                   # para el combo
 
-    # --- inspecciones sólo del usuario conectado ---------------------------
-    inspecciones = []
-    for row in get_all_inspections():
-        d = dict(row)                           # Row -> dict
-        lab_id = d.get("id_laboratorista") or d.get("ID_LABORATORISTA")
-        if lab_id == current_user.id:
-            inspecciones.append(d)
+    # 2) Filtrado por usuario (no-admin ve sólo lo suyo) -------------------
+    if current_user.rol.lower() != "admin":
+        mine_ids = {
+            i["id_inspeccion"]
+            for i in inspecciones
+            if i.get("id_laboratorista") == current_user.id
+        }
+        inspecciones = [i for i in inspecciones if i["id_inspeccion"] in mine_ids]
+        certificados = [c for c in certificados if c["id_inspeccion"] in mine_ids]
 
-    # --- dropdown de clientes ----------------------------------------------
-    clientes = list_clients()
-
-    # --- desviaciones generadas (si existen reglas) ------------------------
-    desviaciones_generadas = None
+    # 3) Desviaciones automáticas para la inspección más reciente ----------
+    desviaciones_generadas = ""
     if inspecciones:
-        ins        = inspecciones[-1]           # la más reciente del usuario
-        parametros = ins.get("parametros_analizados") or ins.get("PARAMETROS_ANALIZADOS")
-        cliente_id = ins.get("id_cliente")            or ins.get("ID_CLIENTE")
+        # ——— orden robusto: fecha real si existe, si no el id más alto
+        def _orden(i):
+            return (
+                i.get("fecha") or i.get("FECHA") or               # posibles nombres
+                i.get("fecha_inspeccion") or i.get("FECHA_INSPECCION") or
+                i["id_inspeccion"]                                # fallback
+            )
+        ultima = max(inspecciones, key=_orden)
+
+        parametros = ultima.get("parametros_analizados") or ultima.get("PARAMETROS_ANALIZADOS")
+        cliente_id = ultima.get("id_cliente")            or ultima.get("ID_CLIENTE")
         if parametros and cliente_id:
             desviaciones_generadas = build_desviaciones(
                 cliente_id,
                 parametros,
-                ""         # texto manual vacío en vista GET
-            )
+                ""
+            ).strip()
 
-    # --- render ------------------------------------------------------------
+    # 4) Render ------------------------------------------------------------
     return render_template(
         "certifications.html",
         certificados=certificados,
