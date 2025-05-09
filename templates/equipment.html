@@ -2,201 +2,202 @@
 {% block title %}Equipos Registrados{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Equipos Registrados</h2>
-    <div class="dropdown">
-        <button class="btn btn-primary dropdown-toggle" type="button" id="actionMenu" data-bs-toggle="dropdown" aria-expanded="false">
-            Acciones
-        </button>
-        <ul class="dropdown-menu" aria-labelledby="actionMenu">
-            <li><a class="dropdown-item" href="{{ url_for('register_equipment')}}">Registrar equipo</a></li>
-            <li>
-                <hr class="dropdown-divider">
-            </li>
-            <li><button class="dropdown-item" id="btn-edit" disabled>Editar</button></li>
-            <li><button class="dropdown-item" id="btn-view" disabled>Ver</button></li>
-            <li><button class="dropdown-item" id="btn-deactivate" disabled>Dar de baja</button></li>
-            <li><button class="dropdown-item" id="btn-delete" disabled>Eliminar</button></li>
-        </ul>
-    </div>
+  <h2 class="mb-0">Equipos Registrados</h2>
+  <div class="dropdown">
+    <button class="btn btn-primary dropdown-toggle" type="button" id="actionMenu" data-bs-toggle="dropdown"
+      aria-expanded="false">
+      Acciones
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="actionMenu">
+      <li><a class="dropdown-item" href="{{ url_for('register_equipment')}}">Registrar equipo</a></li>
+      <li>
+        <hr class="dropdown-divider">
+      </li>
+      <li><button class="dropdown-item" id="btn-edit" disabled>Editar</button></li>
+      <li><button class="dropdown-item" id="btn-view" disabled>Ver</button></li>
+      <li><button class="dropdown-item" id="btn-deactivate" disabled>Dar de baja</button></li>
+      <li><button class="dropdown-item" id="btn-delete" disabled>Eliminar</button></li>
+    </ul>
+  </div>
 </div>
 {% if equipos %}
 <div class="card shadow-sm">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>ID</th>
-                    <th>Tipo</th>
-                    <th>Marca</th>
-                    <th>Modelo</th>
-                    <th>Serie</th>
-                    <th>Ubicación</th>
-                    <th>Encargado</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for eq in equipos %}
-                <tr data-id="{{ eq.id_equipo}}" class="selectable-row" data-equipo='{{ eq | tojson | safe }}'>
-                    <td>{{ eq.id_equipo }}</td>
-                    <td>{{ eq.tipo }}</td>
-                    <td>{{ eq.marca }}</td>
-                    <td>{{ eq.modelo }}</td>
-                    <td>{{ eq.serie }}</td>
-                    <td>{{ eq.ubicacion }}</td>
-                    <td>{{ eq.encargado }}</td>
-                    <td>{{ eq.estado }}</td>
-                <tr>
-                    {% endfor %}
-            </tbody>
-        </table>
-    </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Tipo</th>
+          <th>Marca</th>
+          <th>Modelo</th>
+          <th>Serie</th>
+          <th>Ubicación</th>
+          <th>Encargado</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for eq in equipos %}
+        <tr data-id="{{ eq.id_equipo}}" class="selectable-row" data-equipo='{{ eq | tojson | safe }}'>
+          <td>{{ eq.id_equipo }}</td>
+          <td>{{ eq.tipo }}</td>
+          <td>{{ eq.marca }}</td>
+          <td>{{ eq.modelo }}</td>
+          <td>{{ eq.serie }}</td>
+          <td>{{ eq.ubicacion }}</td>
+          <td>{{ eq.encargado }}</td>
+          <td>{{ eq.estado }}</td>
+        <tr>
+          {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% else %}
 <div class="alert alert-info">No hay equipos registrados todavía.</div>
 {% endif %}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        let selectedId = null;
-        let equipo = null;
-        const rows = document.querySelectorAll('.selectable-row');
-        const editBtn = document.getElementById('btn-edit');
-        const viewBtn = document.getElementById('btn-view');
-        const deactivateBtn = document.getElementById('btn-deactivate');
-        const deleteBtn = document.getElementById('btn-delete');
+  document.addEventListener('DOMContentLoaded', () => {
+    let selectedId = null;
+    let equipo = null;
+    const rows = document.querySelectorAll('.selectable-row');
+    const editBtn = document.getElementById('btn-edit');
+    const viewBtn = document.getElementById('btn-view');
+    const deactivateBtn = document.getElementById('btn-deactivate');
+    const deleteBtn = document.getElementById('btn-delete');
 
-        rows.forEach(row => {
-            row.addEventListener('click', () => {
-                // Quitar selección anterior
-                rows.forEach(r => r.classList.remove('table-primary'));
-                row.classList.add('table-primary');
-                // Guardar el ID y habilitar botones
-                selectedId = row.dataset.id;
-                [editBtn, viewBtn, deactivateBtn,deleteBtn].forEach(btn => btn.disabled = false);
-                // Obtener los datos del equpo
-                const data = document.querySelector(`tr[data-id="${selectedId}"]`);
-                equipo = JSON.parse(row.dataset.equipo)
-            });
-        });
-        // Abrir los modales correspondientes al ID seleccionado
-        editBtn.onclick = () => {
-            const modal = document.getElementById('editModal');
-            const form = modal.querySelector('#editForm');
-
-            // Ruta 
-             form.action = `/equipos/${selectedId}/edit`; 
-
-            // Rellenar todos los campos
-            form.querySelector('[name="tipo"]').value = equipo.tipo || '';
-            form.querySelector('[name="clave"]').value = equipo.clave || '';
-            form.querySelector('[name="marca"]').value = equipo.marca || '';
-            form.querySelector('[name="modelo"]').value = equipo.modelo || '';
-            form.querySelector('[name="serie"]').value = equipo.serie || '';
-            form.querySelector('[name="descripcion_larga"]').value = equipo.descripcion_larga || '';
-            form.querySelector('[name="descripcion_corta"]').value = equipo.descripcion_corta || '';
-            form.querySelector('[name="proveedor"]').value = equipo.proveedor || '';
-            form.querySelector('[name="fecha_adquisicion"]').value = equipo.fecha_adquisicion || '';
-            form.querySelector('[name="garantia"]').value = equipo.garantia || '';
-            form.querySelector('[name="vigencia_garantia"]').value = equipo.vigencia_garantia || '';
-            form.querySelector('[name="ubicacion"]').value = equipo.ubicacion || '';
-            form.querySelector('[name="encargado"]').value = equipo.encargado || '';
-
-            // Seleccionar el valor correcto del select de estado
-            const estadoSelect = form.querySelector('[name="estado"]');
-            if (estadoSelect && equipo.estado) {
-                estadoSelect.value = equipo.estado;
-            }
-
-            // Actualizar título del modal
-            modal.querySelector('.modal-title').textContent = `Editar Equipo #${selectedId}`;
-
-            // Mostrar el modal
-            new bootstrap.Modal(modal).show();
-        };
-        viewBtn.onclick = () => {
-            const modal = document.getElementById('viewModal');
-            const form = modal.querySelector('#viewForm');
-
-            document.getElementById('view-id').textContent = equipo.id_equipo || '-';
-            document.getElementById('view-tipo').textContent = equipo.tipo || '-';
-            document.getElementById('view-clave').textContent = equipo.clave || '-';
-            document.getElementById('view-marca').textContent = equipo.marca || '-';
-            document.getElementById('view-modelo').textContent = equipo.modelo || '-';
-            document.getElementById('view-serie').textContent = equipo.serie || '-';
-            document.getElementById('view-descripcion-larga').textContent = equipo.descripcion_larga || '-';
-            document.getElementById('view-descripcion-corta').textContent = equipo.descripcion_corta || '-';
-            document.getElementById('view-proveedor').textContent = equipo.proveedor || '-';
-            document.getElementById('view-fecha-adquisicion').textContent = equipo.fecha_adquisicion || '-';
-            document.getElementById('view-garantia').textContent = equipo.garantia || '-';
-            document.getElementById('view-vigencia-garantia').textContent = equipo.vigencia_garantia || '-';
-            document.getElementById('view-ubicacion').textContent = equipo.ubicacion || '-';
-            document.getElementById('view-estado').textContent = equipo.estado || '-';
-            document.getElementById('view-causa-baja').textContent = equipo.causa_baja || '-';
-            document.getElementById('view-encargado').textContent = equipo.encargado || '-';
-
-            // Mostrar el modal
-            new bootstrap.Modal(modal).show();        
-        };
-        deactivateBtn.onclick = () => {
-            const row = document.querySelector(`tr[data-id="${selectedId}"]`);
-            const equipo = JSON.parse(row.dataset.equipo);
-
-            const modal = document.getElementById('deactivateModal');
-            const form = document.getElementById('deactivateForm');
-            const textarea = document.getElementById('motivo_baja');
-            const title = modal.querySelector('.modal-title');
-
-            // Limpia el textarea
-            textarea.value = '';
-
-            // Actualiza el título del modal
-            title.textContent = `Dar de baja equipo #${equipo.id_equipo}`;
-
-            // Establece la ruta para enviar el POST con el ID correcto
-            form.action = `/equipos/${equipo.id_equipo}/deactivate`;
-
-            // Muestra el modal
-            new bootstrap.Modal(modal).show();
-        };
-
-        deleteBtn.onclick = () => {
-            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            const form = document.getElementById('deleteForm');
-            form.action = `/equipos/${selectedId}/delete`; 
-            document.getElementById('deleteModalText').textContent =
-                `¿Estás seguro que deseas eliminar el equipo #${selectedId}?`;
-            modal.show();
-        };
+    rows.forEach(row => {
+      row.addEventListener('click', () => {
+        // Quitar selección anterior
+        rows.forEach(r => r.classList.remove('table-primary'));
+        row.classList.add('table-primary');
+        // Guardar el ID y habilitar botones
+        selectedId = row.dataset.id;
+        [editBtn, viewBtn, deactivateBtn, deleteBtn].forEach(btn => btn.disabled = false);
+        // Obtener los datos del equpo
+        const data = document.querySelector(`tr[data-id="${selectedId}"]`);
+        equipo = JSON.parse(row.dataset.equipo)
+      });
     });
+    // Abrir los modales correspondientes al ID seleccionado
+    editBtn.onclick = () => {
+      const modal = document.getElementById('editModal');
+      const form = modal.querySelector('#editForm');
+
+      // Ruta 
+      form.action = `/equipos/${selectedId}/edit`;
+
+      // Rellenar todos los campos
+      form.querySelector('[name="tipo"]').value = equipo.tipo || '';
+      form.querySelector('[name="clave"]').value = equipo.clave || '';
+      form.querySelector('[name="marca"]').value = equipo.marca || '';
+      form.querySelector('[name="modelo"]').value = equipo.modelo || '';
+      form.querySelector('[name="serie"]').value = equipo.serie || '';
+      form.querySelector('[name="descripcion_larga"]').value = equipo.descripcion_larga || '';
+      form.querySelector('[name="descripcion_corta"]').value = equipo.descripcion_corta || '';
+      form.querySelector('[name="proveedor"]').value = equipo.proveedor || '';
+      form.querySelector('[name="fecha_adquisicion"]').value = equipo.fecha_adquisicion || '';
+      form.querySelector('[name="garantia"]').value = equipo.garantia || '';
+      form.querySelector('[name="vigencia_garantia"]').value = equipo.vigencia_garantia || '';
+      form.querySelector('[name="ubicacion"]').value = equipo.ubicacion || '';
+      form.querySelector('[name="encargado"]').value = equipo.encargado || '';
+
+      // Seleccionar el valor correcto del select de estado
+      const estadoSelect = form.querySelector('[name="estado"]');
+      if (estadoSelect && equipo.estado) {
+        estadoSelect.value = equipo.estado;
+      }
+
+      // Actualizar título del modal
+      modal.querySelector('.modal-title').textContent = `Editar Equipo #${selectedId}`;
+
+      // Mostrar el modal
+      new bootstrap.Modal(modal).show();
+    };
+    viewBtn.onclick = () => {
+      const modal = document.getElementById('viewModal');
+      const form = modal.querySelector('#viewForm');
+
+      document.getElementById('view-id').textContent = equipo.id_equipo || '-';
+      document.getElementById('view-tipo').textContent = equipo.tipo || '-';
+      document.getElementById('view-clave').textContent = equipo.clave || '-';
+      document.getElementById('view-marca').textContent = equipo.marca || '-';
+      document.getElementById('view-modelo').textContent = equipo.modelo || '-';
+      document.getElementById('view-serie').textContent = equipo.serie || '-';
+      document.getElementById('view-descripcion-larga').textContent = equipo.descripcion_larga || '-';
+      document.getElementById('view-descripcion-corta').textContent = equipo.descripcion_corta || '-';
+      document.getElementById('view-proveedor').textContent = equipo.proveedor || '-';
+      document.getElementById('view-fecha-adquisicion').textContent = equipo.fecha_adquisicion || '-';
+      document.getElementById('view-garantia').textContent = equipo.garantia || '-';
+      document.getElementById('view-vigencia-garantia').textContent = equipo.vigencia_garantia || '-';
+      document.getElementById('view-ubicacion').textContent = equipo.ubicacion || '-';
+      document.getElementById('view-estado').textContent = equipo.estado || '-';
+      document.getElementById('view-causa-baja').textContent = equipo.causa_baja || '-';
+      document.getElementById('view-encargado').textContent = equipo.encargado || '-';
+
+      // Mostrar el modal
+      new bootstrap.Modal(modal).show();
+    };
+    deactivateBtn.onclick = () => {
+      const row = document.querySelector(`tr[data-id="${selectedId}"]`);
+      const equipo = JSON.parse(row.dataset.equipo);
+
+      const modal = document.getElementById('deactivateModal');
+      const form = document.getElementById('deactivateForm');
+      const textarea = document.getElementById('motivo_baja');
+      const title = modal.querySelector('.modal-title');
+
+      // Limpia el textarea
+      textarea.value = '';
+
+      // Actualiza el título del modal
+      title.textContent = `Dar de baja equipo #${equipo.id_equipo}`;
+
+      // Establece la ruta para enviar el POST con el ID correcto
+      form.action = `/equipos/${equipo.id_equipo}/deactivate`;
+
+      // Muestra el modal
+      new bootstrap.Modal(modal).show();
+    };
+
+    deleteBtn.onclick = () => {
+      const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+      const form = document.getElementById('deleteForm');
+      form.action = `/equipos/${selectedId}/delete`;
+      document.getElementById('deleteModalText').textContent =
+        `¿Estás seguro que deseas eliminar el equipo #${selectedId}?`;
+      modal.show();
+    };
+  });
 </script>
 <!-- View Modal -->
 <div class="modal fade" id="viewModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Detalles del Equipo</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p><strong>ID:</strong> <span id="view-id"></span></p>
-                <p><strong>Tipo:</strong> <span id="view-tipo"></span></p>
-                <p><strong>Clave:</strong> <span id="view-clave"></span></p>
-                <p><strong>Marca:</strong> <span id="view-marca"></span></p>
-                <p><strong>Modelo:</strong> <span id="view-modelo"></span></p>
-                <p><strong>Número de Serie:</strong> <span id="view-serie"></span></p>
-                <p><strong>Descripción Larga:</strong> <span id="view-descripcion-larga"></span></p>
-                <p><strong>Descripción Corta:</strong> <span id="view-descripcion-corta"></span></p>
-                <p><strong>Proveedor:</strong> <span id="view-proveedor"></span></p>
-                <p><strong>Fecha de Adquisición:</strong> <span id="view-fecha-adquisicion"></span></p>
-                <p><strong>Garantía:</strong> <span id="view-garantia"></span></p>
-                <p><strong>Vigencia de garantia:</strong> <span id="view-vigencia-garantia"></span></p>
-                <p><strong>Ubicación:</strong> <span id="view-ubicacion"></span></p>
-                <p><strong>Estado:</strong> <span id="view-estado"></span></p>
-                <p><strong>Causa de baja:</strong> <span id="view-causa-baja"></span></p>
-                <p><strong>Encargado:</strong> <span id="view-encargado"></span></p>
-            </div>
-        </div>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Detalles del Equipo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>ID:</strong> <span id="view-id"></span></p>
+        <p><strong>Tipo:</strong> <span id="view-tipo"></span></p>
+        <p><strong>Clave:</strong> <span id="view-clave"></span></p>
+        <p><strong>Marca:</strong> <span id="view-marca"></span></p>
+        <p><strong>Modelo:</strong> <span id="view-modelo"></span></p>
+        <p><strong>Número de Serie:</strong> <span id="view-serie"></span></p>
+        <p><strong>Descripción Larga:</strong> <span id="view-descripcion-larga"></span></p>
+        <p><strong>Descripción Corta:</strong> <span id="view-descripcion-corta"></span></p>
+        <p><strong>Proveedor:</strong> <span id="view-proveedor"></span></p>
+        <p><strong>Fecha de Adquisición:</strong> <span id="view-fecha-adquisicion"></span></p>
+        <p><strong>Garantía:</strong> <span id="view-garantia"></span></p>
+        <p><strong>Vigencia de garantia:</strong> <span id="view-vigencia-garantia"></span></p>
+        <p><strong>Ubicación:</strong> <span id="view-ubicacion"></span></p>
+        <p><strong>Estado:</strong> <span id="view-estado"></span></p>
+        <p><strong>Causa de baja:</strong> <span id="view-causa-baja"></span></p>
+        <p><strong>Encargado:</strong> <span id="view-encargado"></span></p>
+      </div>
     </div>
+  </div>
 </div>
 <!-- Edit Modal -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editLabel" aria-hidden="true">
@@ -247,11 +248,11 @@
             </div>
             <div class="col-md-6">
               <label class="form-label">Garantía:</label>
-              <input name="garantia" class="form-control">
+              <input type="date" name="garantia" class="form-control">
             </div>
             <div class="col-md-6">
               <label class="form-label">Vigencia Garantía:</label>
-              <input name="vigencia_garantia" class="form-control">
+              <input type="date" name="vigencia_garantia" class="form-control">
             </div>
             <div class="col-md-6">
               <label class="form-label">Ubicación:</label>
@@ -282,46 +283,46 @@
 </div>
 <!-- Deactivate Modal -->
 <div class="modal fade" id="deactivateModal" tabindex="-1" aria-labelledby="deactivateLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="deactivateForm" method="POST">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deactivateLabel">Dar de baja equipo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="motivo_baja" class="form-label">Motivo de baja</label>
-                        <textarea id="motivo_baja" name="motivo_baja" class="form-control" rows="3" required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Confirmar Baja</button>
-                </div>
-            </form>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="deactivateForm" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deactivateLabel">Dar de baja equipo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="motivo_baja" class="form-label">Motivo de baja</label>
+            <textarea id="motivo_baja" name="motivo_baja" class="form-control" rows="3" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Confirmar Baja</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 
 <!-- Delete Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <form id="deleteForm" method="POST">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Eliminar Equipo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p id="deleteModalText"></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
-                </div>
-            </div>
-        </form>
-    </div>
+  <div class="modal-dialog">
+    <form id="deleteForm" method="POST">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Eliminar Equipo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p id="deleteModalText"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}
