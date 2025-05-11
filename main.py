@@ -172,7 +172,7 @@ def logout():
 @app.route("/dashboard", endpoint="dashboard")  # ← alias extra
 @login_required
 def dashboard_view():
-    dash = dashboard_service.generate_dashboard(current_user.id)
+    dash = dashboard_service.generate_dashboard(current_user.id) #type: ignore
     return render_template("dashboard.html", **dash)
 
 

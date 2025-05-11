@@ -1,0 +1,15 @@
+# docker-compose.yml
+version: "3.8"
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app                   # so you can edit locally and see changes
+      - ./data:/app/data         # persist SQLite files (if you use SQLite)
+    environment:
+      FLASK_ENV: development     # or production
