@@ -52,6 +52,8 @@ def list_inspections():
                 i.secuencia,
                 i.tipo_inspeccion,
                 i.fecha,
+                i.parametros_analizados,
+                i.id_equipo,  -- 🔁 esto estaba faltando
                 e.descripcion_corta AS equipo_nombre,
                 e.modelo AS equipo_modelo, 
                 e.serie AS equipo_serie,
@@ -135,7 +137,7 @@ def update_inspection(
                 fecha,
                 id_equipo,
                 secuencia,
-                parametros_analizados,
+                json.dumps(parametros_analizados),
                 tipo_inspeccion,
                 id_laboratorista,
                 id_inspeccion,

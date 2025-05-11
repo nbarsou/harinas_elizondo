@@ -80,18 +80,55 @@
             document.getElementById('view-fecha').textContent = selectedData.fecha;
             document.getElementById('view-equipo').textContent = selectedData.equipo_nombre;
             document.getElementById('view-laboratorista').textContent = selectedData.id_laboratorista;
-            document.getElementById('view-parametros').textContent = JSON.stringify(selectedData.parametros_analizados, null, 2);
+            // Limpiar tabla previa
+            const parametrosTable = document.getElementById('view-parametros-table');
+            parametrosTable.innerHTML = '';
+
+            // Parsear parámetros si vienen como string JSON
+            const parametros = typeof selectedData.parametros_analizados === 'string'
+                ? JSON.parse(selectedData.parametros_analizados)
+                : selectedData.parametros_analizados;
+
+            // Insertar filas en la tabla
+            for (const [nombre, valor] of Object.entries(parametros)) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${nombre.replaceAll('_', ' ')}</td><td>${valor}</td>`;
+                parametrosTable.appendChild(row);
+            }
             modal.show();
         };
         editBtn.onclick = () => {
             const modal = new bootstrap.Modal(document.getElementById('editModal'));
             const form = document.getElementById('editForm');
+            
             form.action = `/inspections/${selectedId}/edit`;
             form.querySelector('[name="numero_lote"]').value = selectedData.numero_lote || '';
             form.querySelector('[name="secuencia"]').value = selectedData.secuencia || '';
             form.querySelector('[name="tipo_inspeccion"]').value = selectedData.tipo_inspeccion || '';
             form.querySelector('[name="fecha"]').value = selectedData.fecha || '';
             document.getElementById('editModalTitle').textContent = `Editar Inspección #${selectedId}`;
+            form.querySelector('#edit-id-equipo').value = selectedData.id_equipo || '';
+
+            // Limpiar campos anteriores
+            const container = document.getElementById('parametros-container');
+            container.innerHTML = '';
+
+            // Parsear los parámetros si vienen como string
+            const parametros = typeof selectedData.parametros_analizados === 'string'
+                ? JSON.parse(selectedData.parametros_analizados)
+                : selectedData.parametros_analizados;
+
+            // Crear inputs para cada parámetro
+            for (const [nombre, valor] of Object.entries(parametros)) {
+                const div = document.createElement('div');
+                div.className = 'col-md-6';
+                div.innerHTML = `
+                    <label class="form-label">${nombre.replaceAll('_', ' ')}</label>
+                    <input type="number" step="any" name="valor_${nombre}" class="form-control mb-2" value="${valor}" required>
+                `;
+                container.appendChild(div);
+            }
+
             modal.show();
         };
         deleteBtn.onclick = () => {
@@ -121,7 +158,17 @@
                 <p><strong>Equipo:</strong> <span id="view-equipo"></span></p>
                 <p><strong>ID Laboratorista:</strong> <span id="view-laboratorista"></span></p>
                 <p><strong>Parámetros:</strong></p>
-                <pre id="view-parametros" class="bg-light p-2 rounded"></pre>
+                <table class="table table-sm table-bordered">
+                  <thead>
+                    <tr>
+                      <th>Nombre del Parámetro</th>
+                      <th>Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody id="view-parametros-table">
+                    <!-- Aquí se insertarán dinámicamente los parámetros -->
+                  </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -130,6 +177,7 @@
 <div class="modal fade" id="editModal" tabindex="-1">
     <div class="modal-dialog">
         <form id="editForm" method="POST">
+            <input type="hidden" name="id_equipo" id="edit-id-equipo">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editModalTitle">Editar Inspección</h5>
@@ -154,6 +202,11 @@
                             <input type="date" name="fecha" class="form-control mb-2" required>
                         </div>
                     </div>
+                    <div class="mt-3">
+                    <h6>Parámetros Analizados</h6>
+                    <div id="parametros-container" class="row g-2">
+                    </div>
+            </div>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-success">Guardar cambios</button>

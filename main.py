@@ -450,16 +450,27 @@ def list_inspections_route():
 @login_required
 @role_required("Admin", "Gerencia de laboratorio", "Gerencia de Control de Calidad")
 def edit_inspection(id):
+    # Construye diccionario de parámetros analizados
+    parametros_analizados = {}
+    for key in request.form:
+        if key.startswith("valor_") and request.form[key]:
+            try:
+                parametros_analizados[key[6:]] = float(request.form[key])
+            except ValueError:
+                flash(f"Valor inválido para el parámetro: {key[6:]}", "danger")
+                return redirect(url_for("list_inspections_route"))
+
     update_inspection(
         id_inspeccion=id,
         numero_lote=request.form["numero_lote"],
         fecha=request.form["fecha"],
-        id_equipo=None,
+        id_equipo=int(request.form["id_equipo"]),
         secuencia=request.form.get("secuencia"),
-        parametros_analizados=None,
+        parametros_analizados=parametros_analizados,
         tipo_inspeccion=request.form["tipo_inspeccion"],
         id_laboratorista=current_user.id,  # type: ignore
     )
+
     flash("Inspección actualizada correctamente.", "success")
     return redirect(url_for("list_inspections_route"))
 
