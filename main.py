@@ -64,7 +64,9 @@ from services.certificate_service import (
     list_certificates,
     delete_certificate,
     create_certificate,
+    build_desviaciones,  # ← añade esto
 )
+
 from services.mail_service import send_certificate
 from services import dashboard_service
 
@@ -172,7 +174,9 @@ def logout():
 @app.route("/dashboard", endpoint="dashboard")  # ← alias extra
 @login_required
 def dashboard_view():
-    dash = dashboard_service.generate_dashboard(current_user.id) #type: ignore
+    dash = dashboard_service.generate_dashboard(
+        current_user
+    )  # ✅ pasamos el objeto user
     return render_template("dashboard.html", **dash)
 
 
@@ -503,8 +507,10 @@ def create_certificate_route():
 
     # 2. Insertar en la base de datos
     try:
+        id_cli = int(form.get("id_cliente", 0))  # ← NUEVO
+
         cert_id = create_certificate(
-            id_cliente=int(form.get("id_cliente", 0)),
+            id_cliente=id_cli,
             id_inspeccion=id_inspeccion,
             secuencia_inspeccion=form.get("secuencia_inspeccion", ""),
             orden_compra=form.get("orden_compra", ""),
@@ -515,7 +521,11 @@ def create_certificate_route():
             fecha_caducidad=form.get("fecha_caducidad", ""),
             resultados_analisis=inspeccion["parametros_analizados"],
             compara_referencias=form.get("compara_referencias", ""),
-            desviaciones=form.get("desviaciones", ""),
+            desviaciones=build_desviaciones(  # ← CAMBIA ESTA LÍNEA
+                id_cli,
+                inspeccion["parametros_analizados"],
+                form.get("desviaciones", ""),
+            ),
             destinatario_correo=form.get("destinatario_correo", ""),
         )
     except Exception as e:
@@ -562,18 +572,60 @@ def create_certificate_route():
     return redirect(url_for("certifications"))
 
 
+# -----------------------------  LISTAR / CREAR  CERTIFICADOS  -----------------------------
 @app.route("/certifications", methods=["GET"])
 @login_required
-def certifications():  # <--- CAMBIA ESTO de 'certification' a 'certifications'
-    certificados = list_certificates()
-    inspecciones = get_all_inspections()
-    clientes = list_clients()
+def certifications():
+    # 1) Tablas base -------------------------------------------------------
+    certificados = list_certificates()  # lista completa
+    inspecciones = [dict(r) for r in get_all_inspections()]  # Row → dict
+    clientes = list_clients()  # para el combo
+
+    # 2) Filtrado por usuario (no-admin ve sólo lo suyo) -------------------
+    if current_user.rol.lower() != "admin":
+        mine_ids = {
+            i["id_inspeccion"]
+            for i in inspecciones
+            if i.get("id_laboratorista") == current_user.id
+        }
+        inspecciones = [i for i in inspecciones if i["id_inspeccion"] in mine_ids]
+        certificados = [c for c in certificados if c["id_inspeccion"] in mine_ids]
+
+    # 3) Desviaciones automáticas para la inspección más reciente ----------
+    desviaciones_generadas = ""
+    if inspecciones:
+        # ——— orden robusto: fecha real si existe, si no el id más alto
+        def _orden(i):
+            return (
+                i.get("fecha")
+                or i.get("FECHA")
+                or i.get("fecha_inspeccion")  # posibles nombres
+                or i.get("FECHA_INSPECCION")
+                or i["id_inspeccion"]  # fallback
+            )
+
+        ultima = max(inspecciones, key=_orden)
+
+        parametros = ultima.get("parametros_analizados") or ultima.get(
+            "PARAMETROS_ANALIZADOS"
+        )
+        cliente_id = ultima.get("id_cliente") or ultima.get("ID_CLIENTE")
+        if parametros and cliente_id:
+            desviaciones_generadas = build_desviaciones(
+                cliente_id, parametros, ""
+            ).strip()
+
+    # 4) Render ------------------------------------------------------------
     return render_template(
         "certifications.html",
         certificados=certificados,
         inspecciones=inspecciones,
         clientes=clientes,
+        desviaciones_generadas=desviaciones_generadas,
     )
+
+
+# -----------------------------------------------------------------------------------------
 
 
 # -----------------------------------
