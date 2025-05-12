@@ -1,34 +1,202 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <style>
-        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
-        h1 { text-align: center; margin-bottom: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #444; padding: 5px; text-align: left; }
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 12px;
+        margin: 40px;
+        color: #000;
+        background-color: #fff;
+      }
+
+      .header {
+        background-color: #04143d;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        border-radius: 5px;
+      }
+
+      .header img {
+        height: 70px;
+        margin-bottom: 10px;
+      }
+
+      .title {
+        font-size: 22px;
+        font-weight: 600;
+        margin-top: 5px;
+      }
+
+      .subtitle {
+        font-size: 14px;
+        font-weight: 300;
+        margin-top: 4px;
+      }
+
+      .section {
+        margin-top: 30px;
+      }
+
+      .section h3 {
+        font-size: 14px;
+        background-color: #f4f4f4;
+        padding: 8px 12px;
+        border-left: 4px solid #04143d;
+        margin-bottom: 10px;
+        border-radius: 3px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        font-size: 12px;
+      }
+
+      th,
+      td {
+        padding: 8px 10px;
+        border: 1px solid #ddd;
+        vertical-align: top;
+      }
+
+      th {
+        background-color: #f9f9f9;
+        font-weight: 600;
+        width: 25%;
+      }
+
+      pre {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 4px;
+        white-space: pre-wrap;
+      }
+
+      .footer {
+        background-color: #04143d;
+        color: white;
+        text-align: center;
+        font-size: 11px;
+        padding: 12px;
+        border-radius: 5px;
+        margin-top: 40px;
+      }
+
+      .signature-section {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 60px;
+      }
+
+      .signature {
+        width: 45%;
+        text-align: center;
+      }
+
+      .signature img {
+        height: 200px;
+        object-fit: contain;
+        margin-bottom: 10px;
+      }
+
+      .signature p {
+        margin: 4px 0;
+        font-size: 11px;
+      }
+
+      .signature hr {
+        border: none;
+        border-top: 1px solid #000;
+        margin: 30px 0 10px;
+      }
     </style>
-</head>
-<body>
-    <h1>Certificado de Calidad</h1>
+  </head>
+  <body>
+    <div class="header">
+      <img
+        src="https://static.wixstatic.com/media/425473_52c5015f104e499b95fb914e566e1525~mv2.png/v1/fill/w_372,h_157,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Logo%20vertical%20blanco.png"
+        alt="Harinas Elizondo Logo"
+      />
+      <div class="title">CERTIFICADO DE CALIDAD</div>
+      <div class="subtitle">
+        Emitido por el Departamento de Control de Calidad - Harinas Elizondo
+      </div>
+    </div>
 
-    <p><strong>ID Certificado:</strong> {{ cert.id_certificado }}</p>
-    <p><strong>ID Cliente:</strong> {{ cert.id_cliente }}</p>
-    <p><strong>ID Inspección:</strong> {{ cert.id_inspeccion }}</p>
-    <p><strong>Secuencia:</strong> {{ cert.secuencia_inspeccion }}</p>
-    <p><strong>Orden de Compra:</strong> {{ cert.orden_compra }}</p>
-    <p><strong>Fecha de Envío:</strong> {{ cert.fecha_envio }}</p>
-    <p><strong>Fecha de Caducidad:</strong> {{ cert.fecha_caducidad }}</p>
+    <div class="section">
+      <h3>Información General</h3>
+      <table>
+        <tr>
+          <th>ID Certificado</th>
+          <td>{{ cert.id_certificado }}</td>
+          <th>ID Cliente</th>
+          <td>{{ cert.id_cliente }}</td>
+        </tr>
+        <tr>
+          <th>ID Inspección</th>
+          <td>{{ cert.id_inspeccion }}</td>
+          <th>Secuencia</th>
+          <td>{{ cert.secuencia_inspeccion }}</td>
+        </tr>
+        <tr>
+          <th>Orden de Compra</th>
+          <td>{{ cert.orden_compra }}</td>
+          <th>Fecha de Envío</th>
+          <td>{{ cert.fecha_envio }}</td>
+        </tr>
+        <tr>
+          <th>Fecha de Caducidad</th>
+          <td colspan="3">{{ cert.fecha_caducidad }}</td>
+        </tr>
+      </table>
+    </div>
 
-    <h3>Parámetros Analizados</h3>
-    <pre>{{ cert.resultados_analisis }}</pre>
+    <div class="section">
+      <h3>Parámetros Analizados</h3>
+      <pre>{{ cert.resultados_analisis }}</pre>
+    </div>
 
-    <h3>Comparación con Referencias</h3>
-    <pre>{{ cert.compara_referencias }}</pre>
+    <div class="section">
+      <h3>Comparación con Referencias</h3>
+      <pre>{{ cert.compara_referencias }}</pre>
+    </div>
 
-    <h3>Desviaciones</h3>
-    <pre>{{ cert.desviaciones }}</pre>
+    <div class="section">
+      <h3>Desviaciones Detectadas</h3>
+      <pre>{{ cert.desviaciones }}</pre>
+    </div>
 
-    <p><em>Generado automáticamente por el Sistema de Laboratorio Harinero.</em></p>
-</body>
+    <div class="signature-section">
+      <div class="signature">
+        <img
+          src="https://static.vecteezy.com/system/resources/previews/023/264/092/non_2x/fake-hand-drawn-autographs-set-handwritten-signature-scribble-for-business-certificate-or-letter-isolated-illustration-vector.jpg"
+          alt="Firma Elaborado por"
+        />
+        <hr />
+        <p>Elaborado por</p>
+        <p>Responsable de Calidad</p>
+      </div>
+      <div class="signature">
+        <img
+          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwHKo5DDzJsK75DosQQ6mWIgVFW2VUEn-awQ&s"
+          alt="Firma Aprobado por"
+        />
+        <hr />
+        <p>Aprobado por</p>
+        <p>Jefe de Control de Calidad</p>
+      </div>
+    </div>
+
+    <div class="footer">
+      Este certificado ha sido generado automáticamente por el Sistema de
+      Control de Calidad de Harinas Elizondo.<br />
+      Los resultados corresponden a una muestra representativa del lote
+      inspeccionado.
+    </div>
+  </body>
 </html>
