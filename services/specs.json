@@ -1,0 +1,78 @@
+{
+  "9": {
+    "alveografo": {
+      "W": {
+        "inf": 60.0,
+        "sup": 110.0
+      },
+      "P": {
+        "inf": 70.0,
+        "sup": 125.0
+      },
+      "L": {
+        "inf": 30.0,
+        "sup": 80.0
+      },
+      "relacion_P_L": {
+        "inf": 2.0,
+        "sup": 9.0
+      }
+    },
+    "farinografo": {
+      "absorcion_de_agua": {
+        "inf": 30.0,
+        "sup": 40.0
+      },
+      "tiempo_de_desarrollo": {
+        "inf": 50.0,
+        "sup": 60.0
+      },
+      "estabilidad": {
+        "inf": 70.0,
+        "sup": 80.0
+      },
+      "indice_de_tolerancia": {
+        "inf": 90.0,
+        "sup": 110.0
+      }
+    }
+  },
+  "10": {
+    "alveografo": {
+      "W": {
+        "inf": 10.0,
+        "sup": 20.0
+      },
+      "P": {
+        "inf": 30.0,
+        "sup": 40.0
+      },
+      "L": {
+        "inf": 50.0,
+        "sup": 60.0
+      },
+      "relacion_P_L": {
+        "inf": 70.0,
+        "sup": 80.0
+      } 
+    },
+    "farinografo": {
+      "absorcion_de_agua": {
+        "inf": 1.0,
+        "sup": 5.0
+      },
+      "tiempo_de_desarrollo": {
+        "inf": 90.0,
+        "sup": 150.0
+      },
+      "estabilidad": {
+        "inf": 150.0,
+        "sup": 200.0
+      },
+      "indice_de_tolerancia": {
+        "inf": 200.0,
+        "sup": 300.0
+      }
+    }
+  }
+}

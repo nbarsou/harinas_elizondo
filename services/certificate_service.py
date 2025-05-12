@@ -13,57 +13,113 @@ import os, json   # ← añade esto
 #  Helpers para comparar resultados vs. especificaciones de cliente
 # --------------------------------------------------------------------
 SPEC_PATH = os.path.join(os.path.dirname(__file__), "specs.json")
+DEFAULT_PATH = os.path.join(os.path.dirname(__file__), "parametros_default.json")
 
-def _load_refs_json(client_id: int) -> dict[str, tuple[float | None, float | None]]:
-    """
-    Devuelve {param: (min,max)} leyendo services/specs.json.
-    Si el cliente no tiene referencias, retorna {}.
-    """
+def _load_refs_json(client_id: int) -> dict:
+    """Load client-specific or default parameters"""
     try:
+        # First try to load client-specific parameters from specs.json
         with open(SPEC_PATH, "r", encoding="utf-8") as fh:
-            data = json.load(fh)
-        raw = data.get(str(client_id), {})
-        return {p: (r.get("min"), r.get("max")) for p, r in raw.items()}
-    except (FileNotFoundError, json.JSONDecodeError):
+            specs = json.load(fh)
+        
+        client_specs = specs.get(str(client_id), {})
+        
+        # If no client-specific parameters found, load defaults
+        if not client_specs:
+            with open(DEFAULT_PATH, "r", encoding="utf-8") as f:
+                defaults = json.load(f)
+            return defaults
+        
+        return client_specs
+    except Exception as e:
+        print(f"Error loading references: {str(e)}")
         return {}
 
-def _detect_devs(resultados_json: str,
-                 refs: dict[str, tuple[float | None, float | None]]) -> list[str]:
-    """
-    Compara los resultados de la inspección (JSON) con los rangos.
-    Retorna lista de desviaciones en formato texto.
-    """
-    try:
-        mediciones = json.loads(resultados_json)
-    except Exception:
-        return []
+def _detect_devs(resultados: dict, refs: dict) -> list:
+    """Detect deviations between results and reference values"""
+    devs = []
 
-    devs: list[str] = []
-    for param, val in mediciones.items():
-        lo, hi = refs.get(param, (None, None))
-        if lo is not None and val < lo:
-            devs.append(f"{param} bajo ({val} < {lo})")
-        elif hi is not None and val > hi:
-            devs.append(f"{param} alto ({val} > {hi})")
+    print(f"DEBUG - Resultados: {resultados}")
+    print(f"DEBUG - Referencias: {refs}")
+
+    # Known parameters mapped to their category
+    known_params = {
+        "W": "alveografo",
+        "P": "alveografo",
+        "L": "alveografo",
+        "relacion_P_L": "alveografo",
+        "absorcion_de_agua": "farinografo",
+        "tiempo_de_desarrollo": "farinografo",
+        "estabilidad": "farinografo",
+        "indice_de_tolerancia": "farinografo"
+    }
+
+    # Flatten if wrapped inside a category key (e.g., {'farinografo': {...}})
+    if any(k in resultados for k in ["farinografo", "alveografo"]):
+        flat_resultados = {}
+        for cat in ["farinografo", "alveografo"]:
+            if cat in resultados and isinstance(resultados[cat], dict):
+                flat_resultados.update(resultados[cat])
+        resultados = flat_resultados
+
+    print("DEBUG - Normalized resultados:", resultados)
+
+    for param_name, category in known_params.items():
+        if param_name not in resultados:
+            continue
+
+        try:
+            param_value = float(resultados[param_name])
+        except (ValueError, TypeError):
+            print(f"DEBUG - Skipping invalid value for {param_name}: {resultados[param_name]}")
+            continue
+
+        ref = refs.get(category, {}).get(param_name, {})
+        min_val = ref.get("inf")
+        max_val = ref.get("sup")
+
+        print(f"DEBUG - Checking {param_name}: value={param_value}, min={min_val}, max={max_val}")
+
+        if min_val is not None and param_value < min_val:
+            devs.append(f"{param_name} bajo ({param_value} < {min_val})")
+        elif max_val is not None and param_value > max_val:
+            devs.append(f"{param_name} alto ({param_value} > {max_val})")
+
+    print(f"DEBUG - Detected deviations: {devs}")
     return devs
 
-def build_desviaciones(id_cliente: int,
-                       resultados_json: str,
-                       user_text: str) -> str:
-    """
-    Devuelve la cadena final de desviaciones:
-    · Si existen rangos en specs.json y se detecta al menos 1 desviación → usa las automáticas.
-    · En cualquier otro caso usa el texto escrito por el usuario.
-    """
-    refs = _load_refs_json(id_cliente)
-    auto = _detect_devs(resultados_json, refs)
-    if auto:
-        return ", ".join(auto)
-
-    # fallback manual
-    manual = [d.strip() for d in user_text.split(",") if d.strip()]
-    return ", ".join(manual)
-# --------------------------------------------------------------------
+def build_desviaciones(id_cliente: int, resultados: dict, user_text: str) -> tuple:
+    """Build deviations list based on client parameters"""
+    print(f"Cliente: {id_cliente}")
+    print(f"Resultados crudos: {resultados}")
+    try:
+        # Parse resultados if it's a string
+        if isinstance(resultados, str):
+            try:
+                resultados = json.loads(resultados)
+            except json.JSONDecodeError:
+                print("DEBUG - JSON decode error on resultados")
+                resultados = {}
+        
+        # Handle null/None case
+        if resultados is None:
+            resultados = {}
+            
+        # Get reference parameters for this client
+        refs = _load_refs_json(id_cliente)
+        
+        # Detect deviations
+        auto_devs = _detect_devs(resultados, refs)
+        
+        if auto_devs:
+            return (True, ", ".join(auto_devs))
+        return (False, user_text.strip())
+    except Exception as e:
+        print(f"DEBUG - Error in build_desviaciones: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        # Return original text if there's an error
+        return (False, user_text.strip())
 
 
 def create_certificate(
@@ -218,7 +274,6 @@ def delete_certificate(id_certificado: int) -> int:
             WHERE id_certificado = ?
         """, (id_certificado,))
         return cursor.rowcount
-
 
 
 def list_certificates() -> list[dict]:

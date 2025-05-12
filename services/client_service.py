@@ -7,49 +7,80 @@ y generar salidas en formato JSON para ciertos datos de clientes.
 También incluye funcionalidades para desactivar o eliminar clientes según reglas personalizadas.
 """
 
-from db import db_connection
 import os
 import json
+from db import db_connection
 
+SPECS_PATH = os.path.join(os.path.dirname(__file__), "specs.json")
 
-def build_config_json(use_custom: bool, form: dict, client_id: int) -> str:
-    # Si no usa parámetros a la carta, cargo los defaults (ya vienen anidados)
-    if not use_custom:
-        path_default = os.path.join(
-            os.path.dirname(__file__), "parametros_default.json"
-        )
-        with open(path_default, "r", encoding="utf-8") as f:
-            params = json.load(f)
+def init_specs_file():
+    """Initialize specs.json if it doesn't exist"""
+    if not os.path.exists(SPECS_PATH):
+        with open(SPECS_PATH, 'w') as f:
+            json.dump({}, f)
 
-    # Si usa parámetros personalizados, construyo dos dicts separados
-    else:
-        alveo = {}
-        fari = {}
+def build_config_json(use_custom: bool, form_data: dict, client_id: int) -> str:
+    """Build and save client parameter configuration"""
+    init_specs_file()
+    
+    config = {}
+    if use_custom:
+        # Process both alveografo and farinografo parameters
+        # Alveógrafo
+        alveo_params = ['W', 'P', 'L', 'relacion_P_L']
+        for param in alveo_params:
+            inf_key = f'alveo_{param}_inf'
+            sup_key = f'alveo_{param}_sup'
+            
+            if inf_key in form_data and sup_key in form_data:
+                inf_value = form_data.get(inf_key, '')
+                sup_value = form_data.get(sup_key, '')
+                
+                # Only add to config if values are provided
+                if inf_value and sup_value:
+                    if not 'alveografo' in config:
+                        config['alveografo'] = {}
+                    
+                    config['alveografo'][param] = {
+                        'inf': float(inf_value) if inf_value else 0,
+                        'sup': float(sup_value) if sup_value else 0
+                    }
+        
+        # Farinógrafo
+        fari_params = ['absorcion_de_agua', 'tiempo_de_desarrollo', 'estabilidad', 'indice_de_tolerancia']
+        for param in fari_params:
+            inf_key = f'fari_{param}_inf'
+            sup_key = f'fari_{param}_sup'
+            
+            if inf_key in form_data and sup_key in form_data:
+                inf_value = form_data.get(inf_key, '')
+                sup_value = form_data.get(sup_key, '')
+                
+                # Only add to config if values are provided
+                if inf_value and sup_value:
+                    if not 'farinografo' in config:
+                        config['farinografo'] = {}
+                    
+                    config['farinografo'][param] = {
+                        'inf': float(inf_value) if inf_value else 0,
+                        'sup': float(sup_value) if sup_value else 0
+                    }
 
-        for key, val in form.items():
-            val = val.strip()
-            if not val:
-                continue
+        # ATOMIC WRITE TO SPECS.JSON
+        with open(SPECS_PATH, 'r+') as f:
+            try:
+                specs = json.load(f)
+            except json.JSONDecodeError:
+                specs = {}
+            
+            specs[str(client_id)] = config
+            f.seek(0)
+            f.truncate()
+            json.dump(specs, f, indent=2)
+            f.flush()  # Force write to disk
+            os.fsync(f.fileno())  # Ensure physical write
 
-            parts = key.split("_")
-            equipo = parts[0]  # "alveo" o "fari"
-            bound = parts[-1]  # "inf" o "sup"
-            # todo lo que queda en medio es el nombre del parámetro
-            param = "_".join(parts[1:-1])
-
-            if equipo == "alveo":
-                # ejemplo: param == "W" o "relacion_P_L"
-                alveo.setdefault(param, {})[bound] = float(val)
-            elif equipo == "fari":
-                # ejemplo: param == "absorcion_de_agua"
-                fari.setdefault(param, {})[bound] = float(val)
-
-        params = {"alveografo": alveo, "farinografo": fari}
-
-    # Siempre incluyo el id del cliente
-    params["id_cliente"] = client_id  # type: ignore
-    return json.dumps(params, ensure_ascii=False)
-
+    return json.dumps(config)
 
 def create_client(
     nombre: str,

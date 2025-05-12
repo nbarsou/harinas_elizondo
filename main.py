@@ -1,5 +1,5 @@
 # Importación de módulos de Flask necesarios para vistas, formularios, sesiones y autenticación
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import (
     LoginManager,
     UserMixin,
@@ -16,10 +16,10 @@ from datetime import date
 # Bibliotecas para mandar certificados
 from xhtml2pdf import pisa  # falta en requirements
 from io import BytesIO
-import os
+import os, json
 
 # Inicialización de base de datos y servicios (lógica de negocio)
-from db import init_db
+from db import init_db, db_connection
 
 from services.user_service import (
     create_user,
@@ -170,15 +170,72 @@ def logout():
     flash("Has cerrado sesión exitosamente.", "info")
     return redirect(url_for("sign_in"))
 
-
-@app.route("/dashboard", endpoint="dashboard")  # ← alias extra
+@app.route("/dashboard", endpoint="dashboard")
 @login_required
 def dashboard_view():
-    dash = dashboard_service.generate_dashboard(
-        current_user
-    )  # ✅ pasamos el objeto user
+    # Obtener el parámetro de meses de la URL o usar 12 por defecto
+    months = request.args.get("months", default=12, type=int)
+    
+    # Obtener los datos del dashboard específicos para el periodo seleccionado
+    dash = dashboard_service.generate_dashboard(current_user, months=months)
+    
+    # Establecer el período seleccionado para el frontend
+    dash['selected_months'] = months
+    
+    # Obtener los certificados con desviaciones para el periodo seleccionado
+    with db_connection() as conn:
+        is_manager = dashboard_service._is_manager(current_user.rol)
+        
+        # Consulta SQL para obtener certificados con desviaciones
+        sql = """
+            SELECT c.*, i.id_laboratorista 
+            FROM CERTIFICADO_CALIDAD AS c
+            JOIN INSPECCION AS i USING (id_inspeccion)
+            WHERE c.fecha_envio >= date('now', ?)
+            AND LENGTH(TRIM(c.desviaciones)) > 0
+        """
+        
+        params = [f"-{months} months"]
+        
+        # Aplicar filtro por usuario si no es gerente
+        if not is_manager:
+            sql += " AND i.id_laboratorista = ?"
+            params.append(current_user.id)
+            
+        # Ejecutar la consulta
+        certificados_con_desviaciones = conn.execute(sql, params).fetchall()
+        
+        # Obtener los clientes para mostrar sus nombres
+        clientes = conn.execute("SELECT id_cliente, nombre FROM CLIENTE").fetchall()
+    
+    # Añadir los certificados y clientes al contexto
+    dash['certificados'] = certificados_con_desviaciones
+    dash['clientes'] = clientes
+    
     return render_template("dashboard.html", **dash)
 
+@app.route("/dashboard/data")
+@login_required
+def dashboard_data():
+    months = request.args.get("months", default=12, type=int)
+    is_manager = dashboard_service._is_manager(current_user.rol)
+    
+    with db_connection() as conn:
+        data = {
+            "certificados": dashboard_service.count_certificados(
+                conn,
+                user_id=current_user.id,
+                is_manager=is_manager,
+                months=months
+            ),
+            "desviaciones": dashboard_service.count_desviaciones(
+                conn,
+                user_id=current_user.id,
+                is_manager=is_manager,
+                months=months
+            )
+        }
+    return jsonify(data)
 
 # -----------------------------------
 # CLIENTES
@@ -499,10 +556,10 @@ def delete_certificate_route(id):
 
 
 # Crear certificados
+# Crear certificados
 @login_required
 @app.route("/certifications/create", methods=["GET", "POST"])
 def create_certificate_route():
-
     # 1. Leer datos del formulario
     form = request.form
     try:
@@ -516,10 +573,19 @@ def create_certificate_route():
         flash("Inspección no encontrada", "danger")
         return redirect(url_for("certifications"))
 
-    # 2. Insertar en la base de datos
-    try:
-        id_cli = int(form.get("id_cliente", 0))  # ← NUEVO
+    # 2. Determinar desviaciones antes de insertar
+    id_cli = int(form.get("id_cliente", 0))
+    user_text = form.get("desviaciones", "").strip()
 
+    has_devs, auto_text = build_desviaciones(
+        id_cliente=id_cli,
+        resultados=inspeccion["parametros_analizados"],
+        user_text=user_text,
+    )
+    desviaciones_final = auto_text if has_devs else user_text
+
+    # 3. Insertar en la base de datos
+    try:
         cert_id = create_certificate(
             id_cliente=id_cli,
             id_inspeccion=id_inspeccion,
@@ -532,21 +598,17 @@ def create_certificate_route():
             fecha_caducidad=form.get("fecha_caducidad", ""),
             resultados_analisis=inspeccion["parametros_analizados"],
             compara_referencias=form.get("compara_referencias", ""),
-            desviaciones=build_desviaciones(  # ← CAMBIA ESTA LÍNEA
-                id_cli,
-                inspeccion["parametros_analizados"],
-                form.get("desviaciones", ""),
-            ),
+            desviaciones=desviaciones_final,
             destinatario_correo=form.get("destinatario_correo", ""),
         )
     except Exception as e:
         flash(f"Error al crear certificado: {e}", "danger")
         return redirect(url_for("certifications"))
 
-    # 3. Preparar datos para el PDF
+    # 4. Preparar datos para el PDF
     cert = {
         "id_certificado": cert_id,
-        "id_cliente": int(form.get("id_cliente", 0)),
+        "id_cliente": id_cli,
         "id_inspeccion": id_inspeccion,
         "secuencia_inspeccion": form.get("secuencia_inspeccion", ""),
         "orden_compra": form.get("orden_compra", ""),
@@ -557,11 +619,11 @@ def create_certificate_route():
         "fecha_caducidad": form.get("fecha_caducidad", ""),
         "resultados_analisis": inspeccion["parametros_analizados"],
         "compara_referencias": form.get("compara_referencias", ""),
-        "desviaciones": form.get("desviaciones", ""),
+        "desviaciones": desviaciones_final,
         "destinatario_correo": form.get("destinatario_correo", ""),
     }
 
-    # 4. Generar PDF desde template
+    # 5. Generar PDF
     html = render_template("certificado_pdf.html", cert=cert)
     pdf_dir = os.path.join(os.path.dirname(__file__), "services", "certificados")
     os.makedirs(pdf_dir, exist_ok=True)
@@ -570,7 +632,7 @@ def create_certificate_route():
     with open(pdf_path, "wb") as pdf_file:
         pisa.CreatePDF(BytesIO(html.encode("utf-8")), dest=pdf_file)
 
-    # 5. Enviar correo con el PDF
+    # 6. Enviar correo con el PDF
     try:
         send_certificate(cert["destinatario_correo"], pdf_filename)
         flash(f"Certificado #{cert_id} emitido y enviado por correo", "success")
@@ -583,58 +645,129 @@ def create_certificate_route():
     return redirect(url_for("certifications"))
 
 
-# -----------------------------  LISTAR / CREAR  CERTIFICADOS  -----------------------------
 @app.route("/certifications", methods=["GET"])
 @login_required
 def certifications():
-    # 1) Tablas base -------------------------------------------------------
-    certificados = list_certificates()  # lista completa
-    inspecciones = [dict(r) for r in get_all_inspections()]  # Row → dict
-    clientes = list_clients()  # para el combo
+    """Endpoint for viewing and creating certificates"""
+    try:
+        # 1) Base data
+        certificados     = list_certificates()
+        raw_inspecciones = get_all_inspections()
+        clientes         = list_clients()
 
-    # 2) Filtrado por usuario (no-admin ve sólo lo suyo) -------------------
-    if current_user.rol.lower() != "admin":
-        mine_ids = {
-            i["id_inspeccion"]
-            for i in inspecciones
-            if i.get("id_laboratorista") == current_user.id
-        }
-        inspecciones = [i for i in inspecciones if i["id_inspeccion"] in mine_ids]
-        certificados = [c for c in certificados if c["id_inspeccion"] in mine_ids]
+        # 2) Convert inspections to dicts (no JSON parsing here; we'll re-fetch for detection)
+        inspecciones = [dict(r) for r in raw_inspecciones]
 
-    # 3) Desviaciones automáticas para la inspección más reciente ----------
-    desviaciones_generadas = ""
-    if inspecciones:
-        # ——— orden robusto: fecha real si existe, si no el id más alto
-        def _orden(i):
-            return (
-                i.get("fecha")
-                or i.get("FECHA")
-                or i.get("fecha_inspeccion")  # posibles nombres
-                or i.get("FECHA_INSPECCION")
-                or i["id_inspeccion"]  # fallback
-            )
+        # 3) Restrict to owner if non-admin
+        if current_user.rol.lower() != "admin":
+            own_ids = {
+                i["id_inspeccion"]
+                for i in inspecciones
+                if i.get("id_laboratorista") == current_user.id
+            }
+            inspecciones = [i for i in inspecciones if i["id_inspeccion"] in own_ids]
+            certificados = [c for c in certificados   if c["id_inspeccion"]  in own_ids]
 
-        ultima = max(inspecciones, key=_orden)
+        # 4) Pre-parse certificate blobs for the table view
+        for cert in certificados:
+            # resultados_analisis
+            raw_res = cert.get("resultados_analisis")
+            if isinstance(raw_res, str):
+                try:
+                    d = json.loads(raw_res)
+                    cert["resultados_analisis_parsed"] = {
+                        k: float(v) if v is not None and str(v).strip() else None
+                        for k, v in d.items()
+                    }
+                except Exception:
+                    cert["resultados_analisis_parsed"] = {}
+            else:
+                cert["resultados_analisis_parsed"] = {}
 
-        parametros = ultima.get("parametros_analizados") or ultima.get(
-            "PARAMETROS_ANALIZADOS"
+            # configuracion_json
+            raw_cfg = cert.get("configuracion_json")
+            if isinstance(raw_cfg, str):
+                try:
+                    cert["configuracion_json_parsed"] = json.loads(raw_cfg)
+                except Exception:
+                    cert["configuracion_json_parsed"] = {}
+            else:
+                cert["configuracion_json_parsed"] = {}
+
+        # 5) Defaults & URL params
+        desviaciones_generadas = ""
+        inspeccion_seleccionada = None
+        cliente_seleccionado    = None
+        has_deviations          = False
+
+        selected_inspection_id = request.args.get("id_inspeccion")
+        selected_client_id     = request.args.get("id_cliente")
+
+        inspecciones_sorted = sorted(
+            inspecciones,
+            key=lambda x: (x.get("fecha", ""), x["id_inspeccion"]),
+            reverse=True
         )
-        cliente_id = ultima.get("id_cliente") or ultima.get("ID_CLIENTE")
-        if parametros and cliente_id:
-            desviaciones_generadas = build_desviaciones(
-                cliente_id, parametros, ""
-            ).strip()
 
-    # 4) Render ------------------------------------------------------------
-    return render_template(
-        "certifications.html",
-        certificados=certificados,
-        inspecciones=inspecciones,
-        clientes=clientes,
-        desviaciones_generadas=desviaciones_generadas,
-    )
+        # 6) Auto-deviation detection
+        if selected_inspection_id:
+            inspeccion_seleccionada = int(selected_inspection_id)
+            if not selected_client_id:
+                # infer client from inspection row if available
+                for insp in inspecciones_sorted:
+                    if insp["id_inspeccion"] == inspeccion_seleccionada:
+                        selected_client_id = str(insp.get("id_cliente", ""))
+                        break
 
+        if selected_client_id:
+            cliente_seleccionado = int(selected_client_id)
+
+        print(f"DEBUG – Selected inspection: {inspeccion_seleccionada}")
+        print(f"DEBUG – Selected client:    {cliente_seleccionado}")
+
+        if inspeccion_seleccionada and cliente_seleccionado:
+            # Re-fetch the raw JSON directly from the DB for this inspection
+            row = get_inspection(inspeccion_seleccionada)
+            raw_pa = row.get("parametros_analizados")
+            try:
+                if isinstance(raw_pa, str):
+                    resultados = json.loads(raw_pa)
+                elif isinstance(raw_pa, dict):
+                    resultados = raw_pa
+                else:
+                    resultados = {}
+            except Exception:
+                resultados = {}
+
+            print(f"DEBUG – DB-fetched resultados: {resultados}")
+
+            # Build deviations
+            has_deviations, deviations = build_desviaciones(
+                id_cliente = cliente_seleccionado,
+                resultados = resultados,
+                user_text  = ""
+            )
+            if has_deviations:
+                desviaciones_generadas = deviations
+                print(f"DEBUG – Auto-detected deviations: {deviations}")
+
+        # 7) Render
+        return render_template(
+            "certifications.html",
+            certificados            = certificados,
+            inspecciones            = inspecciones_sorted,
+            clientes                = clientes,
+            desviaciones_generadas  = desviaciones_generadas.strip(),
+            inspeccion_seleccionada = inspeccion_seleccionada,
+            cliente_seleccionado    = cliente_seleccionado,
+            has_deviations          = has_deviations,
+            today                   = date.today().isoformat()
+        )
+
+    except Exception as e:
+        flash(f"System error loading certificates: {e}", "danger")
+        current_app.logger.error("Certifications route error", exc_info=True)
+        return redirect(url_for("dashboard"))
 
 # -----------------------------------------------------------------------------------------
 

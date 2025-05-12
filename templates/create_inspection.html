@@ -47,22 +47,22 @@
                 <div class="col-md-3">
                     <label class="form-label">W</label>
                     <input type="number" step="any" name="valor_W" class="form-control" placeholder="">
-                    <small class="text-muted">180 – 350</small>
+                    <small class="text-muted"></small> <!--180 – 350-->
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">P</label>
                     <input type="number" step="any" name="valor_P" class="form-control" placeholder="">
-                    <small class="text-muted">70 – 130</small>
+                    <small class="text-muted"></small> <!--70 – 130-->
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">L</label>
                     <input type="number" step="any" name="valor_L" class="form-control" placeholder="">
-                    <small class="text-muted">90 – 140</small>
+                    <small class="text-muted"></small> <!--90 – 140-->
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">P/L</label>
                     <input type="number" step="any" name="valor_relacion_P_L" class="form-control" placeholder="">
-                    <small class="text-muted">0.5 – 1.0</small>
+                    <small class="text-muted"></small> <!--0.5 – 1.0-->
                 </div>
             </div>
         </div>
@@ -74,22 +74,22 @@
                 <div class="col-md-3">
                     <label class="form-label">Absorción de agua</label>
                     <input type="number" step="any" name="valor_absorcion_de_agua" class="form-control" placeholder="">
-                    <small class="text-muted">55 – 65</small>
+                    <small class="text-muted"></small> <!--55 – 65-->
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Tiempo de desarrollo</label>
                     <input type="number" step="any" name="valor_tiempo_de_desarrollo" class="form-control" placeholder="">
-                    <small class="text-muted">1.5 – 3.0</small>
+                    <small class="text-muted"></small> <!--1.5 – 3.0-->
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Estabilidad</label>
                     <input type="number" step="any" name="valor_estabilidad" class="form-control" placeholder="">
-                    <small class="text-muted">5 – 10</small>
+                    <small class="text-muted"></small> <!--5 – 10-->
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Índice de tolerancia</label>
                     <input type="number" step="any" name="valor_indice_de_tolerancia" class="form-control" placeholder="">
-                    <small class="text-muted">70 – 110</small>
+                    <small class="text-muted"></small> <!--70 – 110-->
                 </div>
             </div>
         </div>
@@ -98,6 +98,92 @@
         <button type="submit" class="btn btn-primary">Confirmar</button>
     </div>
 </form>
+<!-- Tabla de parámetros de referencia internacional -->
+<div class="mt-5">
+    <h4>Parámetros de Referencia Internacional</h4>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Alveógrafo</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Parámetro</th>
+                                <th>Valor Mínimo</th>
+                                <th>Valor Máximo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>W</td>
+                                <td>180</td>
+                                <td>350</td>
+                            </tr>
+                            <tr>
+                                <td>P</td>
+                                <td>70</td>
+                                <td>130</td>
+                            </tr>
+                            <tr>
+                                <td>L</td>
+                                <td>90</td>
+                                <td>140</td>
+                            </tr>
+                            <tr>
+                                <td>P/L</td>
+                                <td>0.5</td>
+                                <td>1.0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Farinógrafo</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Parámetro</th>
+                                <th>Valor Mínimo</th>
+                                <th>Valor Máximo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Absorción de agua</td>
+                                <td>55</td>
+                                <td>65</td>
+                            </tr>
+                            <tr>
+                                <td>Tiempo de desarrollo</td>
+                                <td>1.5</td>
+                                <td>3.0</td>
+                            </tr>
+                            <tr>
+                                <td>Estabilidad</td>
+                                <td>5</td>
+                                <td>10</td>
+                            </tr>
+                            <tr>
+                                <td>Índice de tolerancia</td>
+                                <td>70</td>
+                                <td>110</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
   const eqSelect = document.getElementById('id_equipo');
   const aParams  = document.getElementById('alveo-params');
