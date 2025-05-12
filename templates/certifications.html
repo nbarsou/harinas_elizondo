@@ -2,125 +2,171 @@
 {% block title %}Certificados de Calidad{% endblock %}
 
 {% block content %}
+<style>
+  textarea[readonly] {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    cursor: not-allowed;
+  }
+  .dev-alert {
+    font-size: 0.85rem;
+    color: #dc3545;
+  }
+</style>
+
 <h2 class="mb-4">Certificados de Calidad Emitidos</h2>
 
-<!-- Tabla de certificados existentes -->
 <div class="card shadow-sm mb-5">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>ID</th>
-                    <th>Cliente</th>
-                    <th>Inspección</th>
-                    <th>Secuencia</th>
-                    <th>Orden de Compra</th>
-                    <th>Fecha Envío</th>
-                    <th>Correo Destinatario</th>
-                    <th class="text-center">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for cert in certificados %}
-                <tr>
-                    <td>{{ cert.id_certificado }}</td>
-                    <td>{{ cert.id_cliente }}</td>
-                    <td>{{ cert.id_inspeccion }}</td>
-                    <td>{{ cert.secuencia_inspeccion }}</td>
-                    <td>{{ cert.orden_compra }}</td>
-                    <td>{{ cert.fecha_envio }}</td>
-                    <td>{{ cert.destinatario_correo }}</td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-secondary" data-bs-toggle="modal"
-                            data-bs-target="#viewModal{{ cert.id_certificado }}">Ver</button>
-                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
-                            data-bs-target="#deleteModal{{ cert.id_certificado }}">Borrar</button>
-                    </td>
-                </tr>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Cliente</th>
+          <th>Inspección</th>
+          <th>Secuencia</th>
+          <th>Orden Compra</th>
+          <th>Fecha Envío</th>
+          <th>Correo</th>
+          <th class="text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cert in certificados %}
+        <tr>
+          <td>{{ cert.id_certificado }}</td>
+          <td>
+            {% for cli in clientes %}
+              {% if cli.id_cliente == cert.id_cliente %}
+                {{ cli.nombre }}
+              {% endif %}
+            {% endfor %}
+          </td>
+          <td>{{ cert.id_inspeccion }}</td>
+          <td>{{ cert.secuencia_inspeccion }}</td>
+          <td>{{ cert.orden_compra }}</td>
+          <td>{{ cert.fecha_envio }}</td>
+          <td>{{ cert.destinatario_correo }}</td>
+          <td class="text-center">
+            <button class="btn btn-outline-primary me-2" data-bs-toggle="modal"
+                    data-bs-target="#viewModal{{ cert.id_certificado }}">
+              Ver
+            </button>
+            <button class="btn btn-outline-danger" data-bs-toggle="modal"
+                    data-bs-target="#deleteModal{{ cert.id_certificado }}">
+              Borrar
+            </button>
+          </td>
+        </tr>
 
-                <!-- Modal: Ver -->
-                <div class="modal fade" id="viewModal{{ cert.id_certificado }}" tabindex="-1"
-                    aria-labelledby="viewModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Certificado #{{ cert.id_certificado }}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p><strong>ID Cliente:</strong> {{ cert.id_cliente }}</p>
-                                <p><strong>ID Inspección:</strong> {{ cert.id_inspeccion }}</p>
-                                <p><strong>Secuencia:</strong> {{ cert.secuencia_inspeccion }}</p>
-                                <p><strong>Orden de Compra:</strong> {{ cert.orden_compra }}</p>
-                                <p><strong>Cantidad Solicitada:</strong> {{ cert.cantidad_solicitada }}</p>
-                                <p><strong>Cantidad Entregada:</strong> {{ cert.cantidad_entregada }}</p>
-                                <p><strong>Número de Factura:</strong> {{ cert.numero_factura }}</p>
-                                <p><strong>Fecha de Envío:</strong> {{ cert.fecha_envio }}</p>
-                                <p><strong>Fecha de Caducidad:</strong> {{ cert.fecha_caducidad }}</p>
-                                <p><strong>Parámetros Analizados:</strong></p>
-                                <pre class="bg-light p-2 rounded small">{{ cert.resultados_analisis }}</pre>
-                                <p><strong>Comparación con Referencias:</strong></p>
-                                <pre class="bg-light p-2 rounded small">{{ cert.compara_referencias }}</pre>
-                                <p><strong>Desviaciones:</strong></p>
-                                <pre class="bg-light p-2 rounded small">{{ cert.desviaciones }}</pre>
-                                <p><strong>Correo del Cliente:</strong> {{ cert.destinatario_correo }}</p>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Modal: Ver -->
+        <div class="modal fade" id="viewModal{{ cert.id_certificado }}" tabindex="-1"
+             aria-labelledby="viewModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Certificado #{{ cert.id_certificado }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <dl class="row">
+                  <dt class="col-sm-4">Cliente:</dt>
+                  <dd class="col-sm-8">
+                    {% for cli in clientes %}
+                      {% if cli.id_cliente == cert.id_cliente %}
+                        {{ cli.nombre }}
+                      {% endif %}
+                    {% endfor %}
+                  </dd>
+                  <dt class="col-sm-4">Inspección:</dt>
+                  <dd class="col-sm-8">{{ cert.id_inspeccion }}</dd>
+                  <dt class="col-sm-4">Secuencia:</dt>
+                  <dd class="col-sm-8">{{ cert.secuencia_inspeccion }}</dd>
+                  <dt class="col-sm-4">Orden Compra:</dt>
+                  <dd class="col-sm-8">{{ cert.orden_compra }}</dd>
+                  <dt class="col-sm-4">Cantidad Solicitada:</dt>
+                  <dd class="col-sm-8">{{ cert.cantidad_solicitada }}</dd>
+                  <dt class="col-sm-4">Cantidad Entregada:</dt>
+                  <dd class="col-sm-8">{{ cert.cantidad_entregada }}</dd>
+                  <dt class="col-sm-4">Número Factura:</dt>
+                  <dd class="col-sm-8">{{ cert.numero_factura }}</dd>
+                  <dt class="col-sm-4">Fecha Envío:</dt>
+                  <dd class="col-sm-8">{{ cert.fecha_envio }}</dd>
+                  <dt class="col-sm-4">Fecha Caducidad:</dt>
+                  <dd class="col-sm-8">{{ cert.fecha_caducidad }}</dd>
+                </dl>
+
+                <!-- Sólo Deviaciones -->
+                <div class="alert alert-info mt-4">
+                  <strong>Desviaciones:</strong> {{ cert.desviaciones }}
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                <!-- Modal: Eliminar -->
-                <div class="modal fade" id="deleteModal{{ cert.id_certificado }}" tabindex="-1">
-                    <div class="modal-dialog">
-                        <form method="POST" action="{{ url_for('delete_certificate_route', id=cert.id_certificado) }}">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Confirmar Eliminación</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    ¿Seguro que deseas eliminar el certificado #{{ cert.id_certificado }}?
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+        <!-- Modal: Eliminar -->
+        <div class="modal fade" id="deleteModal{{ cert.id_certificado }}" tabindex="-1">
+          <div class="modal-dialog">
+            <form method="POST"
+                  action="{{ url_for('delete_certificate_route', id=cert.id_certificado) }}">
+              <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                  <h5 class="modal-title">Confirmar Eliminación</h5>
+                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
+                <div class="modal-body">
+                  ¿Seguro que deseas eliminar el certificado #{{ cert.id_certificado }}?
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
 
-                {% else %}
-                <tr>
-                    <td colspan="8" class="text-center py-4">No hay certificados registrados.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+        {% else %}
+        <tr>
+          <td colspan="8" class="text-center py-4">
+            <div class="text-muted">
+              <i class="bi bi-file-earmark-excel"></i> No hay certificados registrados
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
+
 
 <!-- Sección de emisión -->
 <h4 class="mb-3">Emitir nuevo certificado</h4>
 
 <!-- Botón para mostrar el formulario -->
-<button class="btn btn-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#formCertificado"
-    aria-expanded="false" aria-controls="formCertificado">
-    Llenar nuevo certificado
+<button class="btn btn-primary mb-3" type="button" data-bs-toggle="collapse" 
+        data-bs-target="#formCertificado" aria-expanded="false" 
+        aria-controls="formCertificado">
+    <i class="bi bi-plus-circle"></i> Nuevo Certificado
 </button>
 
 <!-- Formulario colapsable -->
-<div class="collapse" id="formCertificado">
-    <div class="card card-body shadow-sm">
+<div class="collapse {% if inspeccion_seleccionada or cliente_seleccionado %}show{% endif %}" id="formCertificado">
+    <div class="card card-body shadow-sm mb-4">
         <form method="POST" action="{{ url_for('create_certificate_route') }}">
             <div class="row g-3">
-
                 <!-- Inspección -->
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <label class="form-label">Inspección asociada</label>
-                    <select name="id_inspeccion" class="form-select" required>
-                        <option value="">Seleccione inspección…</option>
+                    <select name="id_inspeccion" class="form-select" required 
+                            id="selectInspeccion">
+                        <option value="">Seleccione inspección...</option>
                         {% for ins in inspecciones %}
-                        <option value="{{ ins.id_inspeccion }}">
+                        <option value="{{ ins.id_inspeccion }}" 
+                                {% if inspeccion_seleccionada and ins.id_inspeccion == inspeccion_seleccionada %}selected{% endif %}
+                                data-client="{{ ins.id_cliente }}">
                             [#{{ ins.id_inspeccion }}] Lote {{ ins.numero_lote }} ({{ ins.secuencia }})
                         </option>
                         {% endfor %}
@@ -128,12 +174,14 @@
                 </div>
 
                 <!-- Cliente -->
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <label class="form-label">Cliente</label>
-                    <select name="id_cliente" class="form-select" required>
-                        <option value="">Seleccione cliente…</option>
+                    <select name="id_cliente" class="form-select" required 
+                            id="selectCliente">
+                        <option value="">Seleccione cliente...</option>
                         {% for cli in clientes %}
-                            <option value="{{ cli.id_cliente }}">
+                            <option value="{{ cli.id_cliente }}"
+                                    {% if cliente_seleccionado and cli.id_cliente|int == cliente_seleccionado|int %}selected{% endif %}>
                                 [{{ cli.id_cliente }}] {{ cli.nombre }}
                             </option>
                         {% endfor %}
@@ -142,84 +190,144 @@
 
                 <!-- Secuencia -->
                 <div class="col-md-4">
-                    <label class="form-label">Secuencia de inspección</label>
-                    <input type="text" name="secuencia_inspeccion" class="form-control" placeholder="Ej. A, B, C" required>
+                    <label class="form-label">Secuencia</label>
+                    <input type="text" name="secuencia_inspeccion" class="form-control" 
+                           placeholder="Ej. A, B, C" required>
+                    <!-- Add near the top of the form -->
+                    <input type="hidden" name="id_cliente" id="hiddenCliente" value="{{ request.form.id_cliente }}">
                 </div>
 
                 <!-- Orden de compra -->
                 <div class="col-md-4">
                     <label class="form-label">Orden de compra</label>
-                    <input type="text" name="orden_compra" class="form-control" placeholder="Ej. OC-23456">
+                    <input type="text" name="orden_compra" class="form-control" 
+                           placeholder="Ej. OC-23456">
+                </div>
+
+                <!-- Factura -->
+                <div class="col-md-4">
+                    <label class="form-label">Número de factura</label>
+                    <input type="text" name="numero_factura" class="form-control" 
+                           placeholder="Ej. FAC-78910">
                 </div>
 
                 <!-- Cantidades -->
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Cantidad solicitada</label>
-                    <input type="number" step="any" name="cantidad_solicitada" class="form-control" placeholder="Ej. 1000">
+                    <input type="number" step="0.01" name="cantidad_solicitada" 
+                           class="form-control" placeholder="Ej. 1000">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Cantidad entregada</label>
-                    <input type="number" step="any" name="cantidad_entregada" class="form-control">
+                    <input type="number" step="0.01" name="cantidad_entregada" 
+                           class="form-control">
                 </div>
 
-                <!-- Factura y fechas -->
-                <div class="col-md-4">
-                    <label class="form-label">Número de factura</label>
-                    <input type="text" name="numero_factura" class="form-control" placeholder="Ej. FAC-78910">
-                </div>
-                <div class="col-md-4">
+                <!-- Fechas -->
+                <div class="col-md-3">
                     <label class="form-label">Fecha de envío</label>
-                    <input type="date" name="fecha_envio" class="form-control">
+                    <input type="date" name="fecha_envio" class="form-control" 
+                           value="{{ today }}">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Fecha de caducidad</label>
                     <input type="date" name="fecha_caducidad" class="form-control">
                 </div>
 
-                <!-- Comparación y desviaciones -->
+                <!-- Comparación -->
                 <div class="col-md-6">
                     <label class="form-label">Comparación con referencias</label>
-                    <textarea name="compara_referencias" class="form-control" rows="3"
-                    placeholder="Ej. Dentro de los parámetros establecidos según norma X."></textarea>                    
-                </div>
-                <!-- Comparación y desviaciones -->
-                <div class="col-md-6">
-                    <label class="form-label">Desviaciones (divididas por comas ,)</label>
-                    <textarea name="desviaciones" class="form-control" rows="3"
-                            placeholder="Ej. humedad alta, ceniza fuera de rango"
-                            {% if desviaciones_generadas %}readonly{% endif %}>{{ desviaciones_generadas|default('', true) }}</textarea>
+                    <textarea name="compara_referencias" class="form-control" rows="2"
+                        placeholder="Ej. Dentro de los parámetros establecidos según norma X."></textarea>
                 </div>
 
+                <!-- Desviaciones -->
+                <div class="col-md-6">
+                    <label class="form-label">Desviaciones</label>
+                    <textarea name="desviaciones" class="form-control" rows="2" 
+                            id="desviacionesField"
+                            placeholder="Ej. humedad alta, ceniza fuera de rango"
+                            {% if has_deviations %}readonly{% endif %}>{{ desviaciones_generadas }}</textarea>
+                    {% if has_deviations %}
+                    <div class="dev-alert mt-1">
+                        <i class="bi bi-info-circle"></i> Desviaciones detectadas automáticamente
+                    </div>
+                    {% endif %}
+                </div>
 
                 <!-- Correo -->
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <label class="form-label">Correo destinatario</label>
-                    <input type="email" name="destinatario_correo" class="form-control" required>
+                    <input type="email" name="destinatario_correo" class="form-control" 
+                           required>
                 </div>
             </div>
 
             <div class="text-end mt-4">
-                <button type="submit" class="btn btn-success">Emitir certificado</button>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-file-earmark-check"></i> Emitir Certificado
+                </button>
             </div>
         </form>
     </div>
 </div>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const textarea = document.querySelector('textarea[name="desviaciones"]');
-      const countLabel = document.getElementById("desviaciones-count");
-      
-      if (textarea && countLabel) {
-        function updateCount() {
-          const val = textarea.value.trim();
-          const count = val ? val.split(',').filter(x => x.trim()).length : 0;
-          countLabel.textContent = `Desviaciones detectadas: ${count}`;
-        }
+document.addEventListener('DOMContentLoaded', () => {
+    const selIns  = document.getElementById('selectInspeccion');
+    const selCli  = document.getElementById('selectCliente');
+    const desva   = document.getElementById('desviacionesField');
+
+    // --- helper que refresca la página conservando los selects ---
+    const reloadWith = (insp, cli) => {
+        const url = new URL(window.location.href);
+        // Clear previous params
+        url.searchParams.delete('id_inspeccion');
+        url.searchParams.delete('id_cliente');
         
-        // Asegurarse de que se actualice al cargar y con cada entrada
-        textarea.addEventListener("input", updateCount);
-        updateCount(); // Ejecutar inmediatamente para valores iniciales
-      }
+        // Only add parameters if they have values
+        if (insp) url.searchParams.set('id_inspeccion', insp);
+        if (cli) url.searchParams.set('id_cliente', cli);
+        
+        console.log("Reloading with URL:", url.toString());
+        window.location.href = url.toString();
+    };
+
+    // 1) si cambias inspección -> actualiza cliente
+    selIns?.addEventListener('change', e => {
+        const opt = e.target.selectedOptions[0];
+        const cId = opt.dataset.client || null;
+        
+        if (opt.value) {
+            reloadWith(opt.value, cId);
+        } else {
+            // Si seleccionamos "Seleccione inspección...", eliminamos ambos parámetros
+            reloadWith(null, null);
+        }
     });
+
+    // 2) si cambias cliente -> recarga con la inspección ya seleccionada
+    selCli?.addEventListener('change', e => {
+        reloadWith(selIns.value || null, e.target.value || null);
+    });
+
+    // 3) contador manual de desviaciones (sólo si el campo NO es readonly)
+    if (desva && !desva.readOnly) {
+        const updateCount = () => {
+            const n = desva.value.split(',').filter(t => t.trim()).length;
+            let badge = document.getElementById('devCounter');
+            if (!badge) {
+                badge = document.createElement('small');
+                badge.id = 'devCounter';
+                badge.className = 'text-muted d-block mt-1';
+                desva.parentNode.appendChild(badge);
+            }
+            badge.textContent = `Desviaciones detectadas: ${n}`;
+        };
+        desva.addEventListener('input', updateCount);
+        updateCount();
+    }
+});
 </script>
+
 {% endblock %}

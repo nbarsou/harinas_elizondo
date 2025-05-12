@@ -6,7 +6,7 @@
         "indice_de_tolerancia": {"inf": 70, "sup": 110}
     },
     "alveografo": {
-        "W": {"inf": 180, "sup": 350},
+        "W": {"inf": 180, "sup": 350}, 
         "P": {"inf": 70, "sup": 130},
         "L": {"inf": 90, "sup": 140},
         "relacion_P_L": {"inf": 0.5, "sup": 1.0}
